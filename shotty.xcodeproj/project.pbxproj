@@ -10,9 +10,22 @@
 		5CF0525D2C9AB35000483423 /* shotty.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = shotty.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5C97CF6D2C9BC7D7009CF4BF /* Exceptions for "shotty" folder in "shotty" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 5CF0525C2C9AB35000483423 /* shotty */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		5CF0525F2C9AB35000483423 /* shotty */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5C97CF6D2C9BC7D7009CF4BF /* Exceptions for "shotty" folder in "shotty" target */,
+			);
 			path = shotty;
 			sourceTree = "<group>";
 		};
@@ -255,6 +268,8 @@
 				DEVELOPMENT_ASSET_PATHS = "\"shotty/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = shotty/Info.plist;
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSLocationUsageDescription = "screen record";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "save image";
@@ -282,6 +297,8 @@
 				DEVELOPMENT_ASSET_PATHS = "\"shotty/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = shotty/Info.plist;
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSLocationUsageDescription = "screen record";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "save image";
