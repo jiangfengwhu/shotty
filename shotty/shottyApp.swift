@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import KeyboardShortcuts // 添加导入
 
 @main
 struct ShottyApp: App {
@@ -22,22 +23,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusBar: StatusBarController?
     var contentWindow: NSWindow?
     @ObservedObject private var contentViewModel = ContentViewModel()
-    var eventMonitor: EventMonitor?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusBar = StatusBarController()
         statusBar?.captureAction = captureScreen
         
-        // 启动全局键盘事件监视器
-        eventMonitor = EventMonitor(mask: [.keyDown]) { event in
-            // 检查是否按下 Command + Shift + 7
-            if event?.modifierFlags.contains(.command) == true &&
-               event?.modifierFlags.contains(.shift) == true &&
-               event?.keyCode == 26 { // Command + Shift + 7
-                self.captureScreen()
-            }
+        // 添加全局快捷键监听
+        KeyboardShortcuts.onKeyUp(for: .openCaptureScreeen) {
+            self.captureScreen()
         }
-        eventMonitor?.start()
     }
     
     func captureScreen() {
