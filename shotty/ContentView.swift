@@ -48,30 +48,6 @@ struct ContentView: View {
         .padding()
         .frame(minWidth: 300, minHeight: 300) // 修改为可调整大小
     }
-    
-    private func saveImageToDownloads(image: NSImage) {
-        guard let data = image.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: data),
-              let pngData = bitmap.representation(using: .png, properties: [:]) else {
-            return
-        }
-        
-        // 使用 NSSavePanel 选择保存位置
-        let savePanel = NSSavePanel()
-        savePanel.allowedFileTypes = ["png"]
-        savePanel.nameFieldStringValue = "screenshot.png"
-        
-        savePanel.begin { result in
-            if result == .OK, let url = savePanel.url {
-                do {
-                    try pngData.write(to: url)
-                    print("图像已保存到：\(url.path)")
-                } catch {
-                    print("保存图像时出错：\(error)")
-                }
-            }
-        }
-    }
 }
 
 struct WebView: View {
@@ -91,7 +67,7 @@ struct WebViewWrapper: NSViewRepresentable {
         let webView = WKWebView()
         webView.navigationDelegate = context.coordinator // 设置导航代理
         let contentController = webView.configuration.userContentController
-        contentController.add(context.coordinator, name: "imageBase64Handler") // 注册消息处理器
+        contentController.add(context.coordinator, name: "saveBase64ImageHandler") // 添加保存 Base64 图像处理器
         return webView
     }
     
@@ -111,6 +87,7 @@ struct WebViewWrapper: NSViewRepresentable {
             // 将图像数据挂载到 JavaScript 上下文
             let js = """
             window.shottyImageBase64 = '\(base64String)';
+            window.saveShottyImage = window.webkit.messageHandlers.saveBase64ImageHandler.postMessage;
             window.onShottyImage && window.onShottyImage('\(base64String)');
             """
             nsView.evaluateJavaScript(js) { (result, error) in
@@ -143,25 +120,23 @@ struct WebViewWrapper: NSViewRepresentable {
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
             print("导航失败：\(error.localizedDescription)") // 打印导航错误
         }
-        
+
         // 处理 JavaScript 脚本消息
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-            if message.name == "imageBase64Handler", let jsonString = message.body as? String {
-                if let data = jsonString.data(using: .utf8) {
-                    do {
-                        if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                            if let base64String = json["imageBase64"] as? String {
-                                print("接收到的 Base64 图像数据：\(base64String)") // 打印接收到的 Base64 数据
-                            }
-                            if let message = json["message"] as? String {
-                                print("接收到的消息：\(message)") // 打印接收到的消息
-                            }
-                        }
-                    } catch {
-                        print("JSON 解析出错：\(error.localizedDescription)") // 打印解析错误
-                    }
-                }
+            if message.name == "saveBase64ImageHandler", let base64String = message.body as? String {
+                // 调用保存 Base64 图像的方法
+                saveBase64Image(base64String: base64String) // 调用父视图的方法
             }
+        }
+        
+        private func saveBase64Image(base64String: String) {
+            let components = base64String.components(separatedBy: ",")
+            guard components.count > 1, let imageData = Data(base64Encoded: components[1]) else { return }
+            guard let image = NSImage(data: imageData) else { 
+                return 
+            }
+            
+            saveImageToDownloads(image: image)
         }
     }
 }
