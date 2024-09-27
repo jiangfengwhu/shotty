@@ -1,9 +1,13 @@
 import AppKit
+import SwiftUI
+import KeyboardShortcuts
 
 class StatusBarController {
     private var statusBar: NSStatusBar
     private var statusItem: NSStatusItem
     var captureAction: (() -> Void)?
+    var openContentViewAction: (() -> Void)?
+    var openSettingsAction: (() -> Void)?
 
     init() {
         statusBar = NSStatusBar.system
@@ -11,10 +15,22 @@ class StatusBarController {
 
         // 添加菜单
         let menu = NSMenu()
+        
+        // 添加截图菜单项
         let captureItem = NSMenuItem(title: "截图", action: #selector(captureScreen), keyEquivalent: "2")
-        captureItem.keyEquivalentModifierMask = [.command, .shift] // 设置快捷键为 Command + Shift + 6
-        captureItem.target = self // 设置目标为当前对象
+        captureItem.target = self
         menu.addItem(captureItem)
+
+        // 添加打开 ContentView 的菜单项
+        let openContentViewItem = NSMenuItem(title: "打开截图结果", action: #selector(openContentView), keyEquivalent: "o")
+        openContentViewItem.target = self
+        menu.addItem(openContentViewItem)
+
+        // 添加设置的菜单项
+        let settingsItem = NSMenuItem(title: "设置", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
         menu.addItem(NSMenuItem(title: "退出", action: #selector(NSApplication.shared.terminate), keyEquivalent: "q"))
         statusItem.menu = menu
 
@@ -27,5 +43,35 @@ class StatusBarController {
 
     @objc func captureScreen() {
         captureAction?()
+    }
+
+    @objc func openContentView() {
+        openContentViewAction?()
+    }
+
+    @objc func openSettings() {
+        openSettingsAction?() // 调用设置窗口的操作
+    }
+
+    @MainActor func updateMenuShortcuts() {
+        if let menu = statusItem.menu {
+            // 更新截图菜单项的快捷键
+            if let captureItem = menu.item(withTitle: "截图") {
+                let shortcut = KeyboardShortcuts.getShortcut(for: .openCaptureScreen)
+                captureItem.setShortcut(shortcut)
+            }
+            
+            // 更新打开内容视图菜单项的快捷键
+            if let openContentViewItem = menu.item(withTitle: "打开截图结果") {
+                let shortcut = KeyboardShortcuts.getShortcut(for: .openContentView)
+                openContentViewItem.setShortcut(shortcut)
+            }
+            
+            // 更新设置菜单项的快捷键
+            if let settingsItem = menu.item(withTitle: "设置") {
+                let shortcut = KeyboardShortcuts.getShortcut(for: .openSettings)
+                settingsItem.setShortcut(shortcut)
+            }
+        }
     }
 }
