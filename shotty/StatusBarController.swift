@@ -8,7 +8,8 @@ class StatusBarController {
     var captureAction: (() -> Void)?
     var openContentViewAction: (() -> Void)?
     var openSettingsAction: (() -> Void)?
-
+    var openPluginManagerAction: (() -> Void)?
+    
     init() {
         statusBar = NSStatusBar.system
         statusItem = statusBar.statusItem(withLength: NSStatusItem.squareLength)
@@ -31,6 +32,11 @@ class StatusBarController {
         settingsItem.target = self
         menu.addItem(settingsItem)
 
+        // 添加打开插件管理视图的菜单项
+        let openPluginManagerItem = NSMenuItem(title: "插件管理", action: #selector(openPluginManager), keyEquivalent: "p")
+        openPluginManagerItem.target = self
+        menu.addItem(openPluginManagerItem)
+
         menu.addItem(NSMenuItem(title: "退出", action: #selector(NSApplication.shared.terminate), keyEquivalent: "q"))
         statusItem.menu = menu
 
@@ -51,6 +57,10 @@ class StatusBarController {
 
     @objc func openSettings() {
         openSettingsAction?() // 调用设置窗口的操作
+    }
+
+    @objc func openPluginManager() {
+        openPluginManagerAction?()
     }
 
     @MainActor func updateMenuShortcuts() {

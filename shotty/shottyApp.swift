@@ -23,6 +23,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusBar: StatusBarController?
     var contentWindow: NSWindow?
     var settingsWindow: NSWindow? // 添加设置窗口的引用
+    var pluginManagerWindow: NSWindow? // 添加插件管理窗口的引用
+
     @ObservedObject private var contentViewModel = ContentViewModel()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -30,7 +32,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusBar?.captureAction = captureScreen
         statusBar?.openContentViewAction = showContentWindow
         statusBar?.openSettingsAction = openSettings // 添加设置窗口的操作
-
+        statusBar?.openPluginManagerAction = openPluginManager
         // 添加全局快捷键监听
         KeyboardShortcuts.onKeyUp(for: .openCaptureScreen) {
             self.captureScreen()
@@ -97,6 +99,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         contentWindow?.makeKeyAndOrderFront(nil)
         NSApplication.shared.activate(ignoringOtherApps: true)
     }
+    
+    func openPluginManager() {
+        if pluginManagerWindow == nil {
+            pluginManagerWindow = NSWindow(
+                contentRect: NSRect(x: 100, y: 100, width: 400, height: 300),
+                styleMask: [.titled, .closable, .resizable],
+                backing: .buffered,
+                defer: false
+            )
+            pluginManagerWindow?.title = "插件管理"
+            pluginManagerWindow?.contentView = NSHostingView(rootView: PluginManagerView())
+            pluginManagerWindow?.delegate = self
+        }
+        pluginManagerWindow?.makeKeyAndOrderFront(nil)
+        NSApplication.shared.activate(ignoringOtherApps: true)
+    }
 }
 
 // 实现 NSWindowDelegate 协议
@@ -105,6 +123,8 @@ extension AppDelegate: NSWindowDelegate {
         if let closedWindow = notification.object as? NSWindow {
             if closedWindow === settingsWindow {
                 settingsWindow = nil // 关闭时将设置窗口引用设置为 nil
+            } else if closedWindow === pluginManagerWindow {
+                pluginManagerWindow = nil // 关闭时将插件管理窗口引用设置为 nil
             } else {
                 contentWindow?.orderOut(nil)
             }
@@ -114,6 +134,9 @@ extension AppDelegate: NSWindowDelegate {
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         if sender === settingsWindow {
             settingsWindow?.orderOut(nil) // 隐藏设置窗口
+            return false // 返回 false 以防止窗口被销毁
+        } else if sender === pluginManagerWindow {
+            pluginManagerWindow?.orderOut(nil) // 隐藏插件管理窗口
             return false // 返回 false 以防止窗口被销毁
         }
         contentWindow?.orderOut(nil) // 隐藏内容窗口

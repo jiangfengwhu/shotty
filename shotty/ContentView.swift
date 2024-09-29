@@ -4,17 +4,18 @@ import WebKit // 添加此行以导入 WebKit
 
 struct ContentView: View {
     @ObservedObject var viewModel: ContentViewModel
-    @State var text = ""
+    @State var htmlString = ""
     @State var capturedImage: NSImage? // 添加状态属性
 
     var body: some View {
         VStack {
 
-            TextField("", text: $text)
+            TextField("", text: $htmlString)
         
             Divider()
 
-            WebView(html: $text, image: $capturedImage) // 传递状态图像
+            // 使用首选项插件的 HTML 内容
+            WebView(html: $htmlString, image: $capturedImage) // 传递状态图像
                 .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
             Button("关闭") {
                 // 隐藏窗口而不是关闭
@@ -34,7 +35,7 @@ struct ContentView: View {
                     if result == .OK, let url = openPanel.url {
                         do {
                             let htmlContent = try String(contentsOf: url, encoding: .utf8)
-                            self.text = htmlContent // 更新文本字段为上传的 HTML 内容
+                            self.htmlString = htmlContent // 更新文本字段为上传的 HTML 内容
                         } catch {
                             print("读取 HTML 文件时出错：\(error)")
                         }
@@ -42,11 +43,34 @@ struct ContentView: View {
                 }
             }
         }
+        .onAppear {
+            loadPreferredPluginHTML() // 在视图出现时加载首选项插件的 HTML
+        }
         .onReceive(viewModel.$capturedImage) { image in
             self.capturedImage = image // 更新状态
         }
         .padding()
-        .frame(minWidth: 300, minHeight: 300) // 修改为可调整大小
+        .frame(minWidth: 600, minHeight: 600) // 修改为可调整大小
+    }
+    
+    private func loadPreferredPluginHTML() {
+        let fileManager = FileManager.default
+        guard let pluginDirectory = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?.appendingPathComponent("plugins") else {
+            return
+        }
+
+        // 获取首选项插件名称
+        if let preferredPlugin = UserDefaults.standard.string(forKey: "preferredPlugin") {
+            let pluginURL = pluginDirectory.appendingPathComponent(preferredPlugin)
+
+            // 读取插件的 HTML 内容
+            do {
+                let htmlContent = try String(contentsOf: pluginURL, encoding: .utf8)
+                self.htmlString = htmlContent // 更新 ViewModel 中的 HTML 内容
+            } catch {
+                print("加载首选项插件 HTML 时出错：\(error)")
+            }
+        }
     }
 }
 
@@ -72,22 +96,25 @@ struct WebViewWrapper: NSViewRepresentable {
     }
     
     func updateNSView(_ nsView: WKWebView, context: Context) {
-        // 仅在 html 发生变化时重新加载
-        if context.coordinator.lastLoadedHTML != html { // 检查 HTML 是否变化
-            nsView.loadHTMLString(html, baseURL: nil) // 加载 HTML 字符串
-            context.coordinator.lastLoadedHTML = html // 更新已加载的 HTML
-        }
+        
         
         if let image = image, let imageData = image.tiffRepresentation {
             // 将图像数据加载到 WebView 中
             let base64String = imageData.base64EncodedString()
-            // let htmlWithImage = "<html><body><img id='capturedImage' src='data:image/png;base64,\(base64String)'/></body></html>"
-            
+            // 仅在 html 发生变化时重新加载
+            if context.coordinator.lastLoadedHTML != html { // 检查 HTML 是否变化
+            let initJS = """
+            <script>
+            window.shottyImageBase64 = '\(base64String)';
+            window.saveShottyImage = window.webkit.messageHandlers.saveBase64ImageHandler.postMessage;
+            </script>
+            """
+                nsView.loadHTMLString(initJS + html, baseURL: nil) // 加载 HTML 字符串
+                context.coordinator.lastLoadedHTML = html // 更新已加载的 HTML
+            }
             
             // 将图像数据挂载到 JavaScript 上下文
             let js = """
-            window.shottyImageBase64 = '\(base64String)';
-            window.saveShottyImage = window.webkit.messageHandlers.saveBase64ImageHandler.postMessage;
             window.onShottyImage && window.onShottyImage('\(base64String)');
             """
             nsView.evaluateJavaScript(js) { (result, error) in
