@@ -8,7 +8,6 @@ class StatusBarController {
     var captureAction: (() -> Void)?
     var openContentViewAction: (() -> Void)?
     var openSettingsAction: (() -> Void)?
-    var openPluginManagerAction: (() -> Void)?
     
     init() {
         statusBar = NSStatusBar.system
@@ -23,19 +22,19 @@ class StatusBarController {
         menu.addItem(captureItem)
 
         // 添加打开 ContentView 的菜单项
-        let openContentViewItem = NSMenuItem(title: "打开截图结果", action: #selector(openContentView), keyEquivalent: "o")
+        let openContentViewItem = NSMenuItem(title: "打开面板", action: #selector(openContentView), keyEquivalent: "o")
         openContentViewItem.target = self
         menu.addItem(openContentViewItem)
 
-        // 添加设置的菜单项
-        let settingsItem = NSMenuItem(title: "设置", action: #selector(openSettings), keyEquivalent: ",")
-        settingsItem.target = self
-        menu.addItem(settingsItem)
+        menu.addItem(NSMenuItem.separator())
 
-        // 添加打开插件管理视图的菜单项
-        let openPluginManagerItem = NSMenuItem(title: "插件管理", action: #selector(openPluginManager), keyEquivalent: "p")
-        openPluginManagerItem.target = self
-        menu.addItem(openPluginManagerItem)
+        // 添加设置的菜单项
+        
+            let settingsItem = NSMenuItem(title: "设置", action: #selector(openSettings), keyEquivalent: ",")
+            settingsItem.target = self
+            menu.addItem(settingsItem)
+
+
 
         menu.addItem(NSMenuItem(title: "退出", action: #selector(NSApplication.shared.terminate), keyEquivalent: "q"))
         statusItem.menu = menu
@@ -59,9 +58,6 @@ class StatusBarController {
         openSettingsAction?() // 调用设置窗口的操作
     }
 
-    @objc func openPluginManager() {
-        openPluginManagerAction?()
-    }
 
     @MainActor func updateMenuShortcuts() {
         if let menu = statusItem.menu {
@@ -76,12 +72,6 @@ class StatusBarController {
                 let shortcut = KeyboardShortcuts.getShortcut(for: .openContentView)
                 openContentViewItem.setShortcut(shortcut)
             }
-            
-            // 更新设置菜单项的快捷键
-            if let settingsItem = menu.item(withTitle: "设置") {
-                let shortcut = KeyboardShortcuts.getShortcut(for: .openSettings)
-                settingsItem.setShortcut(shortcut)
-            }
-        }
+                    }
     }
 }

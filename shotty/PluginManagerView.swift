@@ -6,9 +6,6 @@ struct PluginManagerView: View {
     
     var body: some View {
         VStack {
-            Text("插件管理")
-                .font(.largeTitle)
-                .padding()
             
             List(plugins, id: \.self) { plugin in
                 Text(plugin)
@@ -107,6 +104,7 @@ struct PluginManagerView: View {
         do {
             try fileManager.replaceItemAt(destinationURL, withItemAt: url)
             loadPlugins() // 重新加载插件列表
+            NotificationCenter.default.post(name: Notification.Name("PluginUpdated"), object: nil)
         } catch {
             print("保存插件时出错：\(error)")
         }
@@ -115,6 +113,7 @@ struct PluginManagerView: View {
     private func setPreferredPlugin(plugin: String) {
         // 保存用户选择的首选项插件
         UserDefaults.standard.set(plugin, forKey: "preferredPlugin")
+        NotificationCenter.default.post(name: Notification.Name("PluginUpdated"), object: nil)
         print("已设置首选项启动插件为: \(plugin)")
     }
 }
