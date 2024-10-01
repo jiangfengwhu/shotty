@@ -1,23 +1,24 @@
-import SwiftUI
 import KeyboardShortcuts
+import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var appState: AppState
     @State private var selectedTab = 0
-    
+
     var body: some View {
         TabView(selection: $selectedTab) {
+
+            PluginManagerView(appState: appState)
+                .tabItem {
+                    Label("插件管理", systemImage: "puzzlepiece")
+                }
+                .tag(0)
             ShortcutsSettingsView(statusBarController: appState.statusBar)
                 .tabItem {
                     Label("快捷键", systemImage: "keyboard")
                 }
-                .tag(0)
-            
-            PluginManagerView()
-                .tabItem {
-                    Label("插件管理", systemImage: "puzzlepiece")
-                }
                 .tag(1)
+
         }
         .frame(width: 500, height: 300)
         .padding()
@@ -29,7 +30,7 @@ struct TabButton: View {
     let systemImage: String
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 4) {
@@ -50,32 +51,35 @@ struct TabButton: View {
 
 struct ShortcutsSettingsView: View {
     var statusBarController: StatusBarController?
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
-                Text("打开截图:")
-                KeyboardShortcuts.Recorder(for: .openCaptureScreen, onChange: { _ in
-                    statusBarController?.updateMenuShortcuts()
-                })
+                Text("截图:")
+                    .frame(width: 100, alignment: .trailing)
+                KeyboardShortcuts.Recorder(
+                    for: .openCaptureScreen,
+                    onChange: { _ in
+                        statusBarController?.updateMenuShortcuts()
+                    }
+                )
                 .frame(width: 200)
             }
-            
+
             HStack {
-                Text("打开内容视图:")
-                KeyboardShortcuts.Recorder(for: .openContentView, onChange: { _ in
-                    statusBarController?.updateMenuShortcuts()
-                })
+                Text("打开图片编辑器:")
+                    .frame(width: 100, alignment: .trailing)
+                KeyboardShortcuts.Recorder(
+                    for: .openContentView,
+                    onChange: { _ in
+                        statusBarController?.updateMenuShortcuts()
+                    }
+                )
                 .frame(width: 200)
             }
-            
+
             Spacer()
         }
         .padding()
     }
 }
-
-// xcode 预览
-//#Preview {
-//    SettingsView(statusBarController: StatusBarController())
-//}
