@@ -10,7 +10,7 @@ struct PluginManagerView: View {
             List(appState.plugins, id: \.self, selection: $selectedPlugin) {
                 plugin in
                 HStack {
-                    Text(plugin)  // 插件名称
+                    Text(plugin.replacingOccurrences(of: ".html", with: ""))  // 插件名称
                     Spacer()
                     // 判断是否为默认插件
                     Text(appState.isDefaultPlugin(plugin: plugin) ? "是" : "否")  // 默认插件状态

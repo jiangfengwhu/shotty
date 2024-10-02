@@ -87,9 +87,7 @@ class AppState: ObservableObject {
         let fileManager = FileManager.default
         // 设置插件目录为应用支持目录下的 plugins 文件夹
         guard
-            let pluginDirectory = fileManager.urls(
-                for: .applicationSupportDirectory, in: .userDomainMask
-            ).first?.appendingPathComponent("plugins")
+            let pluginDirectory = Constants.pluginDirectory
         else {
             return
         }
@@ -119,9 +117,7 @@ class AppState: ObservableObject {
     func savePlugin(url: URL) {
         let fileManager = FileManager.default
         guard
-            let pluginDirectory = fileManager.urls(
-                for: .applicationSupportDirectory, in: .userDomainMask
-            ).first?.appendingPathComponent("plugins")
+            let pluginDirectory = Constants.pluginDirectory
         else {
             return
         }
@@ -161,5 +157,33 @@ class AppState: ObservableObject {
 
     func isDefaultPlugin(plugin: String) -> Bool {
         return plugin == UserDefaults.standard.string(forKey: "preferredPlugin")
+    }
+
+    func checkAndCopyDefaultPlugin() {
+        let fileManager = FileManager.default
+        guard let pluginDirectory = Constants.pluginDirectory else {
+            return
+        }
+
+        let destinationURL = pluginDirectory.appendingPathComponent(
+            Constants.defaultPluginName)
+
+        // 检查插件目录中是否存在 shotty.html
+        if !fileManager.fileExists(atPath: destinationURL.path) {
+            // 如果不存在,从 bundle 中复制
+            if let bundleURL = Bundle.main.url(
+                forResource: "shotty", withExtension: "html"
+            ) {
+                do {
+                    try fileManager.copyItem(at: bundleURL, to: destinationURL)
+                    setPreferredPlugin(plugin: Constants.defaultPluginName)
+                    print("默认插件已复制到: \(destinationURL.path)")
+                } catch {
+                    print("复制默认插件时出错: \(error)")
+                }
+            } else {
+                print("在 bundle 中未找到默认插件")
+            }
+        }
     }
 }

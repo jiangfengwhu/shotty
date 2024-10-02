@@ -34,7 +34,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        appState.checkAndCopyDefaultPlugin()
         appState.initStatusBar()
+        appState.reloadPlugins()
         // 添加全局快捷键监听
         KeyboardShortcuts.onKeyUp(for: .openCaptureScreen) {
             self.appState.captureScreen()

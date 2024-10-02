@@ -42,11 +42,8 @@ enum Shotty {
         static func loadPluginHTMLByID(
             pluginID: String, done: @escaping (String?) -> Void
         ) {
-            let fileManager = FileManager.default
             guard
-                let pluginDirectory = fileManager.urls(
-                    for: .applicationSupportDirectory, in: .userDomainMask
-                ).first?.appendingPathComponent("plugins")
+                let pluginDirectory = Constants.pluginDirectory
             else {
                 return
             }
