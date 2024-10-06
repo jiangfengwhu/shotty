@@ -8,10 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		5C97CF702C9D65DD009CF4BF /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 5C97CF6F2C9D65DD009CF4BF /* KeyboardShortcuts */; };
+		8B85FCCC2CB1618F002CFE1B /* shotty in Resources */ = {isa = PBXBuildFile; fileRef = 8B85FCCB2CB1618F002CFE1B /* shotty */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		5CF0525D2C9AB35000483423 /* shotty.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = shotty.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8B85FCCB2CB1618F002CFE1B /* shotty */ = {isa = PBXFileReference; lastKnownFileType = folder; name = shotty; path = plugins/shotty; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -19,6 +21,15 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+			);
+			target = 5CF0525C2C9AB35000483423 /* shotty */;
+		};
+		8B85FCCA2CB16173002CFE1B /* Exceptions for "plugins" folder in "shotty" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"shotty/assets/index-CshGKmZj.js",
+				"shotty/assets/index-CZoyHHQx.css",
+				shotty/index.html,
 			);
 			target = 5CF0525C2C9AB35000483423 /* shotty */;
 		};
@@ -31,6 +42,14 @@
 				5C97CF6D2C9BC7D7009CF4BF /* Exceptions for "shotty" folder in "shotty" target */,
 			);
 			path = shotty;
+			sourceTree = "<group>";
+		};
+		8B85FCC92CB16173002CFE1B /* plugins */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8B85FCCA2CB16173002CFE1B /* Exceptions for "plugins" folder in "shotty" target */,
+			);
+			path = plugins;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -51,7 +70,9 @@
 			isa = PBXGroup;
 			children = (
 				5CF0525F2C9AB35000483423 /* shotty */,
+				8B85FCCB2CB1618F002CFE1B /* shotty */,
 				5CF0525E2C9AB35000483423 /* Products */,
+				8B85FCC92CB16173002CFE1B /* plugins */,
 			);
 			sourceTree = "<group>";
 		};
@@ -80,6 +101,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				5CF0525F2C9AB35000483423 /* shotty */,
+				8B85FCC92CB16173002CFE1B /* plugins */,
 			);
 			name = shotty;
 			packageProductDependencies = (
@@ -131,6 +153,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8B85FCCC2CB1618F002CFE1B /* shotty in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

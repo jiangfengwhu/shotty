@@ -54,7 +54,7 @@ struct PluginManagerView: View {
     }
 
     private func uploadPlugin() {
-        Shotty.Utils.selectHTMLFile { url in
+        Shotty.Utils.selectDirectory { url in
             appState.savePlugin(url: url)
         }
     }

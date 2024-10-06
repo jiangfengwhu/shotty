@@ -26,6 +26,17 @@ enum Shotty {
             }
         }
 
+        static func selectDirectory(done: @escaping (URL) -> Void) {
+            let openPanel = NSOpenPanel()
+            openPanel.canChooseDirectories = true
+            openPanel.canChooseFiles = false
+            openPanel.begin { result in
+                if result == .OK, let url = openPanel.url {
+                    done(url)
+                }
+            }
+        }
+
         static func loadHTMLFile(done: @escaping (String?) -> Void) {
             selectHTMLFile { url in
                 do {
@@ -42,11 +53,7 @@ enum Shotty {
         static func loadPluginHTMLByID(
             pluginID: String, done: @escaping (String?) -> Void
         ) {
-            guard
-                let pluginDirectory = Constants.pluginDirectory
-            else {
-                return
-            }
+            let pluginDirectory = Constants.pluginDirectory
             let pluginURL = pluginDirectory.appendingPathComponent(
                 pluginID)
             do {
@@ -108,6 +115,7 @@ enum Shotty {
         }
         static func genImageChangeJS(imageBase64: String) -> String {
             return """
+                window.shottyImageBase64 = '\(imageBase64)';
                 window.onShottyImage && window.onShottyImage('\(imageBase64)');
                 """
         }

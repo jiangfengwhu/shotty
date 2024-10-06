@@ -86,29 +86,15 @@ class AppState: ObservableObject {
     func reloadPlugins() {
         let fileManager = FileManager.default
         // 设置插件目录为应用支持目录下的 plugins 文件夹
-        guard
-            let pluginDirectory = Constants.pluginDirectory
-        else {
-            return
-        }
+        let pluginDirectory = Constants.pluginDirectory
 
-        // 检查目录是否存在，如果不存在则创建
-        if !fileManager.fileExists(atPath: pluginDirectory.path) {
-            do {
-                try fileManager.createDirectory(
-                    at: pluginDirectory, withIntermediateDirectories: true,
-                    attributes: nil)
-                print("插件目录已创建：\(pluginDirectory.path)")
-            } catch {
-                print("创建插件目录时出错：\(error)")
-            }
-        }
-
-        // 加载插件目录下的所有 HTML 文件
+        // 加载插件目录下的所有目录
         do {
             let files = try fileManager.contentsOfDirectory(
                 at: pluginDirectory, includingPropertiesForKeys: nil)
-            plugins = files.map { $0.lastPathComponent }
+            plugins = files.filter { $0.hasDirectoryPath }.map {
+                $0.lastPathComponent
+            }
         } catch {
             print("加载插件时出错：\(error)")
         }
@@ -116,11 +102,7 @@ class AppState: ObservableObject {
 
     func savePlugin(url: URL) {
         let fileManager = FileManager.default
-        guard
-            let pluginDirectory = Constants.pluginDirectory
-        else {
-            return
-        }
+        let pluginDirectory = Constants.pluginDirectory
 
         let destinationURL = pluginDirectory.appendingPathComponent(
             url.lastPathComponent)
@@ -130,8 +112,8 @@ class AppState: ObservableObject {
             if fileManager.fileExists(atPath: destinationURL.path) {
                 // 弹出确认对话框
                 let alert = NSAlert()
-                alert.messageText = "文件已存在"
-                alert.informativeText = "是否覆盖现有文件？"
+                alert.messageText = "插件已存在"
+                alert.informativeText = "是否覆盖现有插件？"
                 alert.addButton(withTitle: "覆盖")
                 alert.addButton(withTitle: "取消")
 
@@ -144,9 +126,7 @@ class AppState: ObservableObject {
             try fileManager.copyItem(at: url, to: destinationURL)
             reloadPlugins()  // 重新加载插件列表
         } catch {
-            // 处理错误
             print("保存插件时出错：\(error.localizedDescription)")
-            // 可以在这里添加更多的错误处理逻辑，例如弹出警告框
         }
     }
 
@@ -161,18 +141,28 @@ class AppState: ObservableObject {
 
     func checkAndCopyDefaultPlugin() {
         let fileManager = FileManager.default
-        guard let pluginDirectory = Constants.pluginDirectory else {
-            return
+        let pluginDirectory = Constants.pluginDirectory
+
+        // 检查目录是否存在，如果不存在则创建
+        if !fileManager.fileExists(atPath: pluginDirectory.path) {
+            do {
+                try fileManager.createDirectory(
+                    at: pluginDirectory, withIntermediateDirectories: true,
+                    attributes: nil)
+                print("插件目录已创建：\(pluginDirectory.path)")
+            } catch {
+                print("创建插件目录时出错：\(error)")
+            }
         }
 
         let destinationURL = pluginDirectory.appendingPathComponent(
             Constants.defaultPluginName)
 
-        // 检查插件目录中是否存在 shotty.html
+        // 检查插件目录中是否存在 shotty目录
         if !fileManager.fileExists(atPath: destinationURL.path) {
             // 如果不存在,从 bundle 中复制
             if let bundleURL = Bundle.main.url(
-                forResource: "shotty", withExtension: "html"
+                forResource: "shotty", withExtension: nil
             ) {
                 do {
                     try fileManager.copyItem(at: bundleURL, to: destinationURL)

@@ -4,12 +4,12 @@ import SwiftUI
 
 struct EditView: View {
     @ObservedObject var appState: AppState
-    @State var htmlString = ""
-    @State var activePluginId: String = (UserDefaults.standard.string(
-        forKey: "preferredPlugin") ?? "")
+    @State var activePluginId: String =
+        (UserDefaults.standard.string(
+            forKey: "preferredPlugin") ?? "")
     var body: some View {
         ZStack {
-            WebView(html: $htmlString, image: $appState.capturedImage)
+            WebView(pluginID: $activePluginId, image: $appState.capturedImage)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             VStack {
@@ -21,7 +21,6 @@ struct EditView: View {
                             ForEach(appState.plugins, id: \.self) { plugin in
                                 Button(action: {
                                     activePluginId = plugin
-                                    loadPluginHTML()
                                 }) {
                                     Text(plugin)
                                     if activePluginId == plugin {
@@ -39,7 +38,7 @@ struct EditView: View {
                         .buttonStyle(PlainButtonStyle())
 
                         Button(action: {
-                            self.htmlString = "http://localhost:5173/"
+                            self.activePluginId = "http://localhost:5173/"
                             // Shotty.Utils.loadHTMLFile { htmlContent in
                             //     if let htmlContent = htmlContent {
                             //         self.htmlString = htmlContent
@@ -60,32 +59,20 @@ struct EditView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear {
-            loadPluginHTML()
-        }
-    }
-
-    private func loadPluginHTML() {
-        Shotty.Utils.loadPluginHTMLByID(pluginID: activePluginId) {
-            htmlContent in
-            if let htmlContent = htmlContent {
-                self.htmlString = htmlContent
-            }
-        }
     }
 }
 
 struct WebView: View {
-    @Binding var html: String
+    @Binding var pluginID: String
     @Binding var image: NSImage?  // 更改为绑定状态
 
     var body: some View {
-        WebViewWrapper(html: html, image: image)  // 传递图像
+        WebViewWrapper(pluginID: pluginID, image: image)  // 传递图像
     }
 }
 
 struct WebViewWrapper: NSViewRepresentable {
-    let html: String
+    let pluginID: String
     var image: NSImage?  // 添加图像属性
 
     func makeNSView(context: Context) -> WKWebView {
@@ -97,6 +84,8 @@ struct WebViewWrapper: NSViewRepresentable {
         } else {
             // Fallback on earlier versions
         }
+        webView.configuration.preferences.setValue(
+            true, forKey: "allowFileAccessFromFileURLs")
         let contentController = webView.configuration.userContentController
         contentController.add(
             context.coordinator, name: "saveBase64ImageHandler")
@@ -106,19 +95,22 @@ struct WebViewWrapper: NSViewRepresentable {
     func updateNSView(_ nsView: WKWebView, context: Context) {
         let base64String =
             image?.tiffRepresentation?.base64EncodedString() ?? ""
-        let initJS = Shotty.JS.genInitJSTag(imageBase64: base64String)
-
-        if context.coordinator.lastLoadedHTML != html {  // 检查 HTML 是否变化
-            if html.lowercased().hasPrefix("http://") || html.lowercased().hasPrefix("https://") {
+        if context.coordinator.lastLoadedHTML != pluginID {  // 检查 HTML 是否变化
+            if pluginID.lowercased().hasPrefix("http://")
+                || pluginID.lowercased().hasPrefix("https://")
+            {
                 // 如果是URL,直接加载网页
-                if let url = URL(string: html) {
+                if let url = URL(string: pluginID) {
                     nsView.load(URLRequest(url: url))
                 }
             } else {
-                // 如果不是URL,加载HTML字符串
-                nsView.loadHTMLString(initJS + html, baseURL: nil)
+                let pluginDirectory = Constants.pluginDirectory
+                    .appendingPathComponent(pluginID)
+                nsView.loadFileURL(
+                    pluginDirectory.appendingPathComponent("index.html"),
+                    allowingReadAccessTo: pluginDirectory)
             }
-            context.coordinator.lastLoadedHTML = html  // 更新已加载的 HTML
+            context.coordinator.lastLoadedHTML = pluginID  // 更新已加载的 HTML
         }
 
         nsView.evaluateJavaScript(
@@ -182,9 +174,14 @@ struct WebViewWrapper: NSViewRepresentable {
         }
 
         // 添加以下方法来处理下载
-        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        func webView(
+            _ webView: WKWebView,
+            decidePolicyFor navigationAction: WKNavigationAction,
+            decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+        ) {
             if let url = navigationAction.request.url,
-               navigationAction.navigationType == .linkActivated {
+                navigationAction.navigationType == .linkActivated
+            {
                 // 检查是否为下载链接
                 if isDownloadableFile(url: url) {
                     decisionHandler(.cancel)
@@ -199,20 +196,28 @@ struct WebViewWrapper: NSViewRepresentable {
 
         private func isDownloadableFile(url: URL) -> Bool {
             // 这里可以根据文件扩展名或MIME类型来判断是否为可下载文件
-            let downloadableExtensions = ["pdf", "zip", "doc", "docx", "xls", "xlsx", "png", "jpg", "jpeg", "gif", "bmp", "tiff", "webp"]
-            return  downloadableExtensions.contains(url.pathExtension.lowercased())
+            let downloadableExtensions = [
+                "pdf", "zip", "doc", "docx", "xls", "xlsx", "png", "jpg",
+                "jpeg", "gif", "bmp", "tiff", "webp",
+            ]
+            return downloadableExtensions.contains(
+                url.pathExtension.lowercased())
         }
 
         private func downloadFile(from url: URL) {
-            let downloadTask = URLSession.shared.downloadTask(with: url) { (tempLocalUrl, response, error) in
+            let downloadTask = URLSession.shared.downloadTask(with: url) {
+                (tempLocalUrl, response, error) in
                 if let tempLocalUrl = tempLocalUrl, error == nil {
-                    if let statusCode = (response as? HTTPURLResponse)?.statusCode {
+                    if let statusCode = (response as? HTTPURLResponse)?
+                        .statusCode
+                    {
                         print("成功下载。状态码: \(statusCode)")
                     }
-                    
+
                     // 获取建议的文件名
-                    let suggestedFilename = response?.suggestedFilename ?? url.lastPathComponent
-                    
+                    let suggestedFilename =
+                        response?.suggestedFilename ?? url.lastPathComponent
+
                     // 创建保存面板
                     DispatchQueue.main.async {
                         let savePanel = NSSavePanel()
@@ -223,10 +228,14 @@ struct WebViewWrapper: NSViewRepresentable {
                             if result == .OK {
                                 if let destinationUrl = savePanel.url {
                                     do {
-                                        try FileManager.default.moveItem(at: tempLocalUrl, to: destinationUrl)
+                                        try FileManager.default.moveItem(
+                                            at: tempLocalUrl, to: destinationUrl
+                                        )
                                         print("文件已保存到: \(destinationUrl.path)")
                                     } catch {
-                                        print("保存文件时出错: \(error.localizedDescription)")
+                                        print(
+                                            "保存文件时出错: \(error.localizedDescription)"
+                                        )
                                     }
                                 }
                             }
