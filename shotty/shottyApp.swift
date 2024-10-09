@@ -34,8 +34,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.delegate = self
         appState.checkAndCopyDefaultPlugin()
+        appState.initSaveDirectory()
         appState.initStatusBar()
+        appState.initContentWindow()
         appState.reloadPlugins()
         // 添加全局快捷键监听
         KeyboardShortcuts.onKeyUp(for: .openCaptureScreen) {
@@ -56,8 +59,7 @@ extension AppDelegate: NSWindowDelegate {
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        if let contentWindow = appState.contentWindow, sender === contentWindow
-        {
+        if let contentWindow = appState.contentWindow, sender === contentWindow {
             appState.closeContentWindow()
             return false  // 返回 false 以防止窗口被销毁
         }

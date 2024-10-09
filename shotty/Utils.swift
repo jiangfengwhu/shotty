@@ -3,6 +3,53 @@ import SwiftUICore
 
 enum Shotty {
     enum Utils {
+        static func initSaveDirectory() -> URL? {
+            if let bookmarkData = UserDefaults.standard.data(forKey: "SaveDirectoryBookmark") {
+
+                do {
+                    var isStale = false
+                    let url = try URL(
+                        resolvingBookmarkData: bookmarkData, options: .withSecurityScope,
+                        relativeTo: nil, bookmarkDataIsStale: &isStale)
+
+                    if !isStale {
+                        _ = url.startAccessingSecurityScopedResource()
+                        return url
+                    } else {
+                        let _ = saveSaveDirectoryBookmark(url: url)
+                    }
+                } catch {
+                    print("无法恢复书签：\(error)")
+                }
+            }
+            return nil
+        }
+
+        static func saveSaveDirectoryBookmark(url: URL) -> URL? {
+            do {
+                let bookmarkData = try url.bookmarkData(
+                    options: .withSecurityScope,
+                    includingResourceValuesForKeys: nil,
+                    relativeTo: nil
+                )
+                UserDefaults.standard.set(bookmarkData, forKey: "SaveDirectoryBookmark")
+                let _ = url.startAccessingSecurityScopedResource()
+                print("成功保存书签数据")
+                return url
+            } catch {
+                print("保存书签数据失败: \(error.localizedDescription)", url)
+
+                // 检查 URL 是否可访问
+                if url.startAccessingSecurityScopedResource() {
+                    print("URL 可以访问")
+                    url.stopAccessingSecurityScopedResource()
+                } else {
+                    print("无法访问 URL")
+                }
+            }
+            return nil
+        }
+
         static func showSettingsWindow() {
             if #available(macOS 14.0, *) {
                 @Environment(\.openSettings) var openSettings
@@ -66,8 +113,9 @@ enum Shotty {
             }
         }
     }
+
     enum ImageUtils {
-        static func saveImageToDownloads(image: NSImage) {
+        static func saveImage(image: NSImage, dir: URL?, fileName: String) {
             guard let data = image.tiffRepresentation,
                 let bitmap = NSBitmapImageRep(data: data),
                 let pngData = bitmap.representation(
@@ -75,24 +123,48 @@ enum Shotty {
             else {
                 return
             }
-
-            // 使用 NSSavePanel 选择保存位置
-            let savePanel = NSSavePanel()
-            savePanel.allowedFileTypes = ["png"]
-            savePanel.nameFieldStringValue = "screenshot.png"
-
-            savePanel.begin { result in
-                if result == .OK, let url = savePanel.url {
+            if let dir = dir {
+                do {
+                    try pngData.write(to: dir.appendingPathComponent(fileName))
+                } catch {
+                    print("保存图像时出错：\(error)")
+                }
+            } else {
+                Shotty.Utils.selectDirectory { url in
+                    let savePath = url.appendingPathComponent(fileName)
                     do {
-                        try pngData.write(to: url)
-                        print("像已保存到：\(url.path)")
+                        try pngData.write(to: savePath)
+                        print("像已保存到：\(savePath.path)")
+                        // 调用 appState 中的 setSaveDirectory 方法
+                        DispatchQueue.main.async {
+                            if let appDelegate = NSApp.delegate as? AppDelegate {
+                                appDelegate.appState.setSaveDirectory(directory: url)
+                            }
+                        }
                     } catch {
                         print("保存图像时出错：\(error)")
                     }
                 }
+
+                // 使用 NSSavePanel 选择保存位置
+                // let savePanel = NSSavePanel()
+                // savePanel.allowedContentTypes = [.png]
+                // savePanel.nameFieldStringValue = path.lastPathComponent
+
+                // savePanel.begin { result in
+                //     if result == .OK, let url = savePanel.url {
+                //         do {
+                //             try pngData.write(to: url)
+                //             print("像已保存到：\(url.path)")
+                //             Shotty.Utils.saveSaveDirectoryBookmark(url: url)
+                //         } catch {
+                //             print("保存图像时出错：\(error)")
+                //         }
+                //     }
+                // }
             }
         }
-        static func saveBase64Image(base64String: String) {
+        static func saveBase64Image(base64String: String, dir: URL?, fileName: String) {
             let components = base64String.components(separatedBy: ",")
             guard components.count > 1,
                 let imageData = Data(base64Encoded: components[1])
@@ -101,7 +173,7 @@ enum Shotty {
                 return
             }
 
-            saveImageToDownloads(image: image)
+            saveImage(image: image, dir: dir, fileName: fileName)
         }
     }
     enum JS {

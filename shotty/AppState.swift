@@ -4,6 +4,8 @@ import SwiftUI
 class AppState: ObservableObject {
     @Published var capturedImage: NSImage?
     @Published var plugins: [String] = []
+    @Published var saveDirectory: URL?
+
     var contentWindow: NSWindow?
     var statusBar: StatusBarController?
     var delegate: AppDelegate?
@@ -55,23 +57,27 @@ class AppState: ObservableObject {
         }
     }
 
+    func initContentWindow() {
+        let contentView = EditView(appState: self)
+        let screenSize =
+            NSScreen.main?.frame.size ?? CGSize(width: 1200, height: 1000)
+        contentWindow = NSWindow(
+            contentRect: NSRect(
+                x: 0, y: 0, width: screenSize.width * 0.67,
+                height: screenSize.height * 0.67),
+            styleMask: [.titled, .closable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        contentWindow?.title = "截图结果"
+        contentWindow?.contentView = NSHostingView(rootView: contentView)
+        contentWindow?.delegate = delegate
+        contentWindow?.center()
+    }
+
     func showContentWindow() {
         if contentWindow == nil {
-            let contentView = EditView(appState: self)
-            let screenSize =
-                NSScreen.main?.frame.size ?? CGSize(width: 1200, height: 1000)
-            contentWindow = NSWindow(
-                contentRect: NSRect(
-                    x: 0, y: 0, width: screenSize.width / 2,
-                    height: screenSize.height / 2),
-                styleMask: [.titled, .closable, .resizable],
-                backing: .buffered,
-                defer: false
-            )
-            contentWindow?.title = "截图结果"
-            contentWindow?.contentView = NSHostingView(rootView: contentView)
-            contentWindow?.delegate = delegate
-            contentWindow?.center()
+            initContentWindow()
         }
         NSApp.activate(ignoringOtherApps: true)
         contentWindow?.makeKeyAndOrderFront(nil)
@@ -176,4 +182,18 @@ class AppState: ObservableObject {
             }
         }
     }
+
+    func setSaveDirectory(directory: URL) {
+        if let dir = Shotty.Utils.saveSaveDirectoryBookmark(url: directory) {
+            saveDirectory = dir
+        }
+    }
+
+    func initSaveDirectory() {
+        let dir = Shotty.Utils.initSaveDirectory()
+        if let dir = dir {
+            saveDirectory = dir
+        }
+    }
+
 }

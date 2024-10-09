@@ -13,7 +13,7 @@ struct SettingsView: View {
                     Label("插件管理", systemImage: "puzzlepiece")
                 }
                 .tag(0)
-            ShortcutsSettingsView(statusBarController: appState.statusBar)
+            ShortcutsSettingsView(appState: appState)
                 .tabItem {
                     Label("快捷键", systemImage: "keyboard")
                 }
@@ -50,7 +50,7 @@ struct TabButton: View {
 }
 
 struct ShortcutsSettingsView: View {
-    var statusBarController: StatusBarController?
+    @ObservedObject var appState: AppState
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -60,7 +60,7 @@ struct ShortcutsSettingsView: View {
                 KeyboardShortcuts.Recorder(
                     for: .openCaptureScreen,
                     onChange: { _ in
-                        statusBarController?.updateMenuShortcuts()
+                        appState.statusBar?.updateMenuShortcuts()
                     }
                 )
                 .frame(width: 200)
@@ -72,9 +72,27 @@ struct ShortcutsSettingsView: View {
                 KeyboardShortcuts.Recorder(
                     for: .openContentView,
                     onChange: { _ in
-                        statusBarController?.updateMenuShortcuts()
+                        appState.statusBar?.updateMenuShortcuts()
                     }
                 )
+                .frame(width: 200)
+            }
+
+            HStack {
+                Text("保存目录:")
+                    .frame(width: 100, alignment: .trailing)
+                    .padding(.trailing, 36)
+
+                HStack {
+                    Button(action: {
+                        Shotty.Utils.selectDirectory { url in
+                            appState.setSaveDirectory(directory: url)
+                        }
+                    }) {
+                        Text(appState.saveDirectory?.path ?? "请选择保存目录")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
                 .frame(width: 200)
             }
 

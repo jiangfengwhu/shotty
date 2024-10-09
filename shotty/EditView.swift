@@ -9,8 +9,12 @@ struct EditView: View {
             forKey: "preferredPlugin") ?? "")
     var body: some View {
         ZStack {
-            WebView(pluginID: $activePluginId, image: $appState.capturedImage)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            WebView(
+                pluginID: $activePluginId, image: $appState.capturedImage,
+                saveDirectory: $appState.saveDirectory,
+                dismiss: appState.closeContentWindow
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             VStack {
                 Spacer()
@@ -64,17 +68,22 @@ struct EditView: View {
 
 struct WebView: View {
     @Binding var pluginID: String
-    @Binding var image: NSImage?  // 更改为绑定状态
+    @Binding var image: NSImage?
+    @Binding var saveDirectory: URL?
+    var dismiss: () -> Void
 
     var body: some View {
-        WebViewWrapper(pluginID: pluginID, image: image)  // 传递图像
+        WebViewWrapper(
+            pluginID: pluginID, dismiss: dismiss, image: image, saveDirectory: saveDirectory)  // 传递图像
     }
 }
 
 struct WebViewWrapper: NSViewRepresentable {
     let pluginID: String
-    var image: NSImage?  // 添加图像属性
+    var dismiss: () -> Void
 
+    var image: NSImage?
+    var saveDirectory: URL?
     func makeNSView(context: Context) -> WKWebView {
         let webView = WKWebView()
         webView.navigationDelegate = context.coordinator
@@ -89,12 +98,13 @@ struct WebViewWrapper: NSViewRepresentable {
         let contentController = webView.configuration.userContentController
         contentController.add(
             context.coordinator, name: "saveBase64ImageHandler")
+        contentController.add(
+            context.coordinator, name: "hideContentViewHandler")
         return webView
     }
 
     func updateNSView(_ nsView: WKWebView, context: Context) {
-        let base64String =
-            image?.tiffRepresentation?.base64EncodedString() ?? ""
+        context.coordinator.updateSaveDirectory(url: saveDirectory)
         if context.coordinator.lastLoadedHTML != pluginID {  // 检查 HTML 是否变化
             if pluginID.lowercased().hasPrefix("http://")
                 || pluginID.lowercased().hasPrefix("https://")
@@ -112,16 +122,20 @@ struct WebViewWrapper: NSViewRepresentable {
             }
             context.coordinator.lastLoadedHTML = pluginID  // 更新已加载的 HTML
         }
-
-        nsView.evaluateJavaScript(
-            Shotty.JS.genImageChangeJS(imageBase64: base64String)
-        ) { (result, error) in
-            if let error = error {
-                print("JavaScript 执行出错：\(error.localizedDescription)")  // 打印错误信息
-            } else {
-                print("JavaScript 执行成功，结果：\(String(describing: result))")  // 打印执行结果
+        if context.coordinator.lastImage != image {
+            context.coordinator.lastImage = image
+            let base64String =
+                image?.tiffRepresentation?.base64EncodedString() ?? ""
+            nsView.evaluateJavaScript(
+                Shotty.JS.genImageChangeJS(imageBase64: base64String)
+            ) { (result, error) in
+                if let error = error {
+                    print("JavaScript 执行出错：\(error.localizedDescription)")  // 打印错误信息
+                } else {
+                    print("JavaScript 执行成功，结果：\(String(describing: result))")  // 打印执行结果
+                }
             }
-        }  // 确保在加载后执行
+        }
     }
 
     func makeCoordinator() -> Coordinator {
@@ -133,9 +147,15 @@ struct WebViewWrapper: NSViewRepresentable {
     {
         var parent: WebViewWrapper
         var lastLoadedHTML: String = ""  // 将 lastLoadedHTML 移到 Coordinator
+        var lastImage: NSImage?
+        var saveDirectory: URL?
 
         init(_ parent: WebViewWrapper) {
             self.parent = parent
+        }
+
+        func updateSaveDirectory(url: URL?) {
+            saveDirectory = url
         }
 
         // 处理 JavaScript 脚本消息
@@ -146,8 +166,18 @@ struct WebViewWrapper: NSViewRepresentable {
             if message.name == "saveBase64ImageHandler",
                 let base64String = message.body as? String
             {
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd-HH-mm-ss"
+                let dateString = dateFormatter.string(from: Date())
                 // 调用保存 Base64 图像的方法
-                Shotty.ImageUtils.saveBase64Image(base64String: base64String)  // 调用父视图的方法
+                Shotty.ImageUtils.saveBase64Image(
+                    base64String: base64String,
+                    dir: saveDirectory,
+                    fileName: "shotty-" + dateString + ".png"
+                )  // 调用父视图的方法
+            }
+            if message.name == "hideContentViewHandler" {
+                parent.dismiss()
             }
         }
 
