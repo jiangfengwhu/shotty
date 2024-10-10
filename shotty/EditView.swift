@@ -164,16 +164,17 @@ struct WebViewWrapper: NSViewRepresentable {
             didReceive message: WKScriptMessage
         ) {
             if message.name == "saveBase64ImageHandler",
-                let base64String = message.body as? String
+                let params = message.body as? [String: Any]
             {
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateFormat = "yyyy-MM-dd-HH-mm-ss"
                 let dateString = dateFormatter.string(from: Date())
                 // 调用保存 Base64 图像的方法
                 Shotty.ImageUtils.saveBase64Image(
-                    base64String: base64String,
+                    base64String: params["base64String"] as? String ?? "",
                     dir: saveDirectory,
-                    fileName: "shotty-" + dateString + ".png"
+                    fileName: "shotty-" + dateString + ".png",
+                    closeWindow: params["closeWindow"] as? Bool ?? true
                 )  // 调用父视图的方法
             }
             if message.name == "hideContentViewHandler" {

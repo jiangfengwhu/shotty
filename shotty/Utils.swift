@@ -112,10 +112,18 @@ enum Shotty {
                 done(nil)
             }
         }
+
+        static func closeWindow() {
+            DispatchQueue.main.async {
+                if let appDelegate = NSApp.delegate as? AppDelegate {
+                    appDelegate.appState.closeContentWindow()
+                }
+            }
+        }
     }
 
     enum ImageUtils {
-        static func saveImage(image: NSImage, dir: URL?, fileName: String) {
+        static func saveImage(image: NSImage, dir: URL?, fileName: String, closeWindow: Bool) {
             guard let data = image.tiffRepresentation,
                 let bitmap = NSBitmapImageRep(data: data),
                 let pngData = bitmap.representation(
@@ -126,6 +134,9 @@ enum Shotty {
             if let dir = dir {
                 do {
                     try pngData.write(to: dir.appendingPathComponent(fileName))
+                    if closeWindow {
+                        Shotty.Utils.closeWindow()
+                    }
                 } catch {
                     print("保存图像时出错：\(error)")
                 }
@@ -140,6 +151,9 @@ enum Shotty {
                             if let appDelegate = NSApp.delegate as? AppDelegate {
                                 appDelegate.appState.setSaveDirectory(directory: url)
                             }
+                        }
+                        if closeWindow {
+                            Shotty.Utils.closeWindow()
                         }
                     } catch {
                         print("保存图像时出错：\(error)")
@@ -164,7 +178,9 @@ enum Shotty {
                 // }
             }
         }
-        static func saveBase64Image(base64String: String, dir: URL?, fileName: String) {
+        static func saveBase64Image(
+            base64String: String, dir: URL?, fileName: String, closeWindow: Bool = true
+        ) {
             let components = base64String.components(separatedBy: ",")
             guard components.count > 1,
                 let imageData = Data(base64Encoded: components[1])
@@ -173,7 +189,7 @@ enum Shotty {
                 return
             }
 
-            saveImage(image: image, dir: dir, fileName: fileName)
+            saveImage(image: image, dir: dir, fileName: fileName, closeWindow: closeWindow)
         }
     }
     enum JS {
