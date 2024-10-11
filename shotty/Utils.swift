@@ -20,7 +20,7 @@ enum Shotty {
                         let _ = saveSaveDirectoryBookmark(url: url)
                     }
                 } catch {
-                    print("无法恢复书签：\(error)")
+                    showToast(message: "无法恢复书签：\(error.localizedDescription)")
                 }
             }
             return nil
@@ -38,15 +38,7 @@ enum Shotty {
                 print("成功保存书签数据")
                 return url
             } catch {
-                print("保存书签数据失败: \(error.localizedDescription)", url)
-
-                // 检查 URL 是否可访问
-                if url.startAccessingSecurityScopedResource() {
-                    print("URL 可以访问")
-                    url.stopAccessingSecurityScopedResource()
-                } else {
-                    print("无法访问 URL")
-                }
+                showToast(message: "保存书签数据失败: \(error.localizedDescription)")
             }
             return nil
         }
@@ -92,7 +84,7 @@ enum Shotty {
                         contentsOf: url, encoding: .utf8)
                     done(htmlContent)
                 } catch {
-                    print("读取 HTML 文件时出错：\(error)")
+                    showToast(message: "读取 HTML 文件时出错：\(error.localizedDescription)")
                     done(nil)
                 }
             }
@@ -129,6 +121,14 @@ enum Shotty {
                 }
             }
         }
+
+        static func showToast(message: String) {
+            DispatchQueue.main.async {
+                if let appDelegate = NSApp.delegate as? AppDelegate {
+                    appDelegate.appState.showToast(message: message)
+                }
+            }
+        }
     }
 
     enum ImageUtils {
@@ -147,7 +147,7 @@ enum Shotty {
                         Shotty.Utils.closeWindow()
                     }
                 } catch {
-                    print("保存图像时出错：\(error)")
+                    Shotty.Utils.showToast(message: "保存图像时出错：\(error.localizedDescription)")
                 }
             } else {
                 Shotty.Utils.selectDirectory { url in
@@ -165,7 +165,7 @@ enum Shotty {
                             Shotty.Utils.closeWindow()
                         }
                     } catch {
-                        print("保存图像时出错：\(error)")
+                        Shotty.Utils.showToast(message: "保存图像时出错：\(error.localizedDescription)")
                     }
                 }
 

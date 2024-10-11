@@ -9,6 +9,8 @@ class AppState: ObservableObject {
 
     var webview: WKWebView = WKWebView()
     var contentWindow: NSWindow?
+    var toastWindow: NSWindow?
+    private var hideToastWorkItem: DispatchWorkItem?
     var statusBar: StatusBarController?
     var delegate: AppDelegate?
     var isWindowOpen: Bool = false {
@@ -16,6 +18,9 @@ class AppState: ObservableObject {
             updateDockIconVisibility()
         }
     }
+
+    @Published var toastMessage: String?
+    @Published var showToast: Bool = false
 
     func setDelegate(delegate: AppDelegate) {
         self.delegate = delegate
@@ -104,7 +109,7 @@ class AppState: ObservableObject {
                 $0.lastPathComponent
             }
         } catch {
-            print("加载插件时出错：\(error)")
+            showToast(message: "加载插件时出错：\(error)")
         }
     }
 
@@ -134,7 +139,7 @@ class AppState: ObservableObject {
             try fileManager.copyItem(at: url, to: destinationURL)
             reloadPlugins()  // 重新加载插件列表
         } catch {
-            print("保存插件时出错：\(error.localizedDescription)")
+            showToast(message: "保存插件时出错：\(error.localizedDescription)")
         }
     }
 
@@ -159,7 +164,7 @@ class AppState: ObservableObject {
                     attributes: nil)
                 print("插件目录已创建：\(pluginDirectory.path)")
             } catch {
-                print("创建插件目录时出错：\(error)")
+                showToast(message: "创建插件目录时出错：\(error.localizedDescription)")
             }
         }
 
@@ -177,10 +182,10 @@ class AppState: ObservableObject {
                     setPreferredPlugin(plugin: Constants.defaultPluginName)
                     print("默认插件已复制到: \(destinationURL.path)")
                 } catch {
-                    print("复制默认插件时出错: \(error)")
+                    showToast(message: "复制默认插件时出错: \(error.localizedDescription)")
                 }
             } else {
-                print("在 bundle 中未找到默认插件")
+                showToast(message: "在 bundle 中未找到默认插件")
             }
         }
     }
@@ -200,5 +205,59 @@ class AppState: ObservableObject {
 
     func reloadWebView() {
         webview.reload()
+    }
+
+    func showToast(message: String) {
+        hideToastWorkItem?.cancel()
+
+        self.toastMessage = message
+        self.showToast = true
+        self.displayToastWindow()
+
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.hideToast()
+        }
+        self.hideToastWorkItem = workItem
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: workItem)
+    }
+
+    private func hideToast() {
+        DispatchQueue.main.async {
+            self.toastWindow?.orderOut(nil)
+            self.showToast = false
+        }
+    }
+
+    func displayToastWindow() {
+        if toastWindow == nil {
+            let toastView = ToastView(appState: self)
+            let hostingView = NSHostingView(rootView: toastView)
+
+            let rect = CGRect(x: 0, y: 0, width: 340, height: 100)
+            toastWindow = NSWindow(
+                contentRect: rect,
+                styleMask: [.borderless],
+                backing: .buffered,
+                defer: false
+            )
+            toastWindow?.contentView = hostingView
+            toastWindow?.backgroundColor = .clear
+            toastWindow?.isOpaque = false
+            toastWindow?.hasShadow = false
+            toastWindow?.level = .floating
+            toastWindow?.ignoresMouseEvents = true
+            if let screen = NSScreen.main {
+                let screenRect = screen.visibleFrame
+                let toastRect = toastWindow?.frame ?? CGRect.zero
+                let newOrigin = NSPoint(
+                    x: screenRect.midX - toastRect.width / 2 - 20,
+                    y: screenRect.maxY - toastRect.height
+                )
+                toastWindow?.setFrameOrigin(newOrigin)
+            }
+        }
+
+        toastWindow?.orderFront(nil)
     }
 }

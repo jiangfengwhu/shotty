@@ -42,8 +42,11 @@ struct EditView: View {
                         .buttonStyle(PlainButtonStyle())
 
                         Button(action: {
-                            appState.reloadWebView()
-                            // self.activePluginId = "http://localhost:5173/"
+                            // appState.reloadWebView()
+                            appState.showToast(
+                                message: "Reloading..." + UUID().uuidString
+                            )
+                            self.activePluginId = "http://localhost:5173/"
                         }) {
                             Image(systemName: "arrow.up.doc")
                                 .foregroundColor(.blue)
@@ -100,6 +103,8 @@ struct WebViewWrapper: NSViewRepresentable {
             context.coordinator, name: "saveBase64ImageHandler")
         contentController.add(
             context.coordinator, name: "hideContentViewHandler")
+        contentController.add(
+            context.coordinator, name: "showToastHandler")
         return webView
     }
 
@@ -130,7 +135,9 @@ struct WebViewWrapper: NSViewRepresentable {
                 Shotty.JS.genImageChangeJS(imageBase64: base64String)
             ) { (result, error) in
                 if let error = error {
-                    print("JavaScript 执行出错：\(error.localizedDescription)")  // 打印错误信息
+                    Shotty.Utils.showToast(
+                        message: "JavaScript 执行出错：\(error.localizedDescription)"
+                    )
                 } else {
                     print("JavaScript 执行成功，结果：\(String(describing: result))")  // 打印执行结果
                 }
@@ -176,8 +183,11 @@ struct WebViewWrapper: NSViewRepresentable {
                     fileName: "shotty-" + dateString + ".png",
                     closeWindow: params["closeWindow"] as? Bool ?? true
                 )  // 调用父视图的方法
-            }
-            if message.name == "hideContentViewHandler" {
+            } else if message.name == "showToastHandler",
+                let params = message.body as? [String: Any]
+            {
+                Shotty.Utils.showToast(message: params["message"] as? String ?? "")
+            } else if message.name == "hideContentViewHandler" {
                 parent.dismiss()
             }
         }
@@ -264,8 +274,8 @@ struct WebViewWrapper: NSViewRepresentable {
                                         )
                                         print("文件已保存到: \(destinationUrl.path)")
                                     } catch {
-                                        print(
-                                            "保存文件时出错: \(error.localizedDescription)"
+                                        Shotty.Utils.showToast(
+                                            message: "保存文件时出错: \(error.localizedDescription)"
                                         )
                                     }
                                 }
@@ -273,7 +283,9 @@ struct WebViewWrapper: NSViewRepresentable {
                         }
                     }
                 } else {
-                    print("下载文件时出错: \(error?.localizedDescription ?? "未知错误")")
+                    Shotty.Utils.showToast(
+                        message: "下载文件时出错: \(error?.localizedDescription ?? "未知错误")"
+                    )
                 }
             }
             downloadTask.resume()
