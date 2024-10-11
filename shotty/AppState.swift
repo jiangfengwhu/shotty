@@ -1,11 +1,13 @@
 import AppKit
 import SwiftUI
+import WebKit
 
 class AppState: ObservableObject {
     @Published var capturedImage: NSImage?
     @Published var plugins: [String] = []
     @Published var saveDirectory: URL?
 
+    var webview: WKWebView = WKWebView()
     var contentWindow: NSWindow?
     var statusBar: StatusBarController?
     var delegate: AppDelegate?
@@ -168,7 +170,7 @@ class AppState: ObservableObject {
         if !fileManager.fileExists(atPath: destinationURL.path) {
             // 如果不存在,从 bundle 中复制
             if let bundleURL = Bundle.main.url(
-                forResource: "shotty", withExtension: nil
+                forResource: Constants.defaultPluginName, withExtension: nil
             ) {
                 do {
                     try fileManager.copyItem(at: bundleURL, to: destinationURL)
@@ -196,4 +198,7 @@ class AppState: ObservableObject {
         }
     }
 
+    func reloadWebView() {
+        webview.reload()
+    }
 }

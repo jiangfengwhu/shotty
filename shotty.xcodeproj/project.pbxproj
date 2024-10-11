@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5C7755B32CB8FCBD00130946 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 5C7755B22CB8FCBD00130946 /* ZIPFoundation */; };
 		5C97CF702C9D65DD009CF4BF /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 5C97CF6F2C9D65DD009CF4BF /* KeyboardShortcuts */; };
 		8B85FCCC2CB1618F002CFE1B /* shotty in Resources */ = {isa = PBXBuildFile; fileRef = 8B85FCCB2CB1618F002CFE1B /* shotty */; };
 /* End PBXBuildFile section */
@@ -60,6 +61,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5C97CF702C9D65DD009CF4BF /* KeyboardShortcuts in Frameworks */,
+				5C7755B32CB8FCBD00130946 /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -106,6 +108,7 @@
 			name = shotty;
 			packageProductDependencies = (
 				5C97CF6F2C9D65DD009CF4BF /* KeyboardShortcuts */,
+				5C7755B22CB8FCBD00130946 /* ZIPFoundation */,
 			);
 			productName = shotty;
 			productReference = 5CF0525D2C9AB35000483423 /* shotty.app */;
@@ -137,6 +140,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				5C97CF6E2C9D65DD009CF4BF /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+				5C7755B12CB8FCBD00130946 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5CF0525E2C9AB35000483423 /* Products */;
@@ -372,6 +376,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		5C7755B12CB8FCBD00130946 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.19;
+			};
+		};
 		5C97CF6E2C9D65DD009CF4BF /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
@@ -383,6 +395,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		5C7755B22CB8FCBD00130946 /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5C7755B12CB8FCBD00130946 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
 		5C97CF6F2C9D65DD009CF4BF /* KeyboardShortcuts */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5C97CF6E2C9D65DD009CF4BF /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;

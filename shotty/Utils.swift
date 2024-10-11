@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUICore
+import ZIPFoundation
 
 enum Shotty {
     enum Utils {
@@ -120,6 +121,14 @@ enum Shotty {
                 }
             }
         }
+
+        static func refreshWebView() {
+            DispatchQueue.main.async {
+                if let appDelegate = NSApp.delegate as? AppDelegate {
+                    appDelegate.appState.reloadWebView()
+                }
+            }
+        }
     }
 
     enum ImageUtils {
@@ -206,6 +215,64 @@ enum Shotty {
                 window.shottyImageBase64 = '\(imageBase64)';
                 window.onShottyImage && window.onShottyImage('\(imageBase64)');
                 """
+        }
+    }
+    enum UpdateUtils {
+        static func checkForUpdates() {
+            guard let url = URL(string: "http://120.46.72.66/shotty.zip") else { return }
+
+            var request = URLRequest(url: url)
+            request.httpMethod = "HEAD"
+
+            URLSession.shared.dataTask(with: request) { _, response, error in
+                guard let httpResponse = response as? HTTPURLResponse,
+                    let etag: String = httpResponse.allHeaderFields["Etag"] as? String,
+                    error == nil
+                else {
+                    print("检查更新失败")
+                    return
+                }
+
+                let currentETag = UserDefaults.standard.string(forKey: "LastETag") ?? ""
+
+                if etag != currentETag {
+                    print("etag", etag)
+                    downloadAndInstallUpdate(from: url, newETag: etag)
+                } else {
+                    print("没有可用更新")
+                }
+            }.resume()
+        }
+        static func downloadAndInstallUpdate(from url: URL, newETag: String) {
+            URLSession.shared.downloadTask(with: url) { localURL, _, error in
+                guard let localURL = localURL, error == nil else {
+                    print("下载更新失败")
+                    return
+                }
+
+                do {
+                    let pluginDirectory = Constants.pluginDirectory.appendingPathComponent(
+                        Constants.defaultPluginName)
+                    if FileManager.default.fileExists(atPath: pluginDirectory.path) {
+                        try FileManager.default.removeItem(at: pluginDirectory)
+                    }
+                    try FileManager.default.unzipItem(at: localURL, to: Constants.pluginDirectory)
+
+                    UserDefaults.standard.set(newETag, forKey: "LastETag")
+                    print("更新成功安装")
+
+                    Shotty.Utils.refreshWebView()
+                } catch {
+                    print("安装更新失败: \(error.localizedDescription)")
+                }
+            }.resume()
+        }
+        static func startUpdateCheck() {
+            let timer = Timer.scheduledTimer(withTimeInterval: 24 * 60 * 60, repeats: true) { _ in
+                checkForUpdates()
+            }
+            timer.fire()  // 立即执行一次检查
+            RunLoop.current.add(timer, forMode: .common)
         }
     }
 }

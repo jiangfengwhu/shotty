@@ -11,7 +11,7 @@ struct EditView: View {
         ZStack {
             WebView(
                 pluginID: $activePluginId, image: $appState.capturedImage,
-                saveDirectory: $appState.saveDirectory,
+                saveDirectory: $appState.saveDirectory, webView: appState.webview,
                 dismiss: appState.closeContentWindow
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -42,12 +42,8 @@ struct EditView: View {
                         .buttonStyle(PlainButtonStyle())
 
                         Button(action: {
-                            self.activePluginId = "http://localhost:5173/"
-                            // Shotty.Utils.loadHTMLFile { htmlContent in
-                            //     if let htmlContent = htmlContent {
-                            //         self.htmlString = htmlContent
-                            //     }
-                            // }
+                            appState.reloadWebView()
+                            // self.activePluginId = "http://localhost:5173/"
                         }) {
                             Image(systemName: "arrow.up.doc")
                                 .foregroundColor(.blue)
@@ -70,22 +66,26 @@ struct WebView: View {
     @Binding var pluginID: String
     @Binding var image: NSImage?
     @Binding var saveDirectory: URL?
+
+    var webView: WKWebView
     var dismiss: () -> Void
 
     var body: some View {
         WebViewWrapper(
-            pluginID: pluginID, dismiss: dismiss, image: image, saveDirectory: saveDirectory)  // 传递图像
+            pluginID: pluginID, dismiss: dismiss, webView: webView, image: image,
+            saveDirectory: saveDirectory
+        )  // 传递图像
     }
 }
 
 struct WebViewWrapper: NSViewRepresentable {
     let pluginID: String
     var dismiss: () -> Void
+    var webView: WKWebView
 
     var image: NSImage?
     var saveDirectory: URL?
     func makeNSView(context: Context) -> WKWebView {
-        let webView = WKWebView()
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator  // 添加 UI 代理
         if #available(macOS 13.3, *) {

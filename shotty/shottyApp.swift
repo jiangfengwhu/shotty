@@ -49,6 +49,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.appState.showContentWindow()  // 调用打开 ContentView 的方法
         }
         NSApp.setActivationPolicy(.accessory)
+        Shotty.UpdateUtils.startUpdateCheck()
     }
 
 }
