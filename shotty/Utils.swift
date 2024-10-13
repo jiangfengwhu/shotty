@@ -1,6 +1,8 @@
 import AppKit
 import SwiftUICore
+import Vision
 import ZIPFoundation
+
 extension String {
     var localized: String {
         NSLocalizedString(self, comment: "")
@@ -9,12 +11,15 @@ extension String {
 enum Shotty {
     enum Utils {
         static func initSaveDirectory() -> URL? {
-            if let bookmarkData = UserDefaults.standard.data(forKey: "SaveDirectoryBookmark") {
+            if let bookmarkData = UserDefaults.standard.data(
+                forKey: "SaveDirectoryBookmark")
+            {
 
                 do {
                     var isStale = false
                     let url = try URL(
-                        resolvingBookmarkData: bookmarkData, options: .withSecurityScope,
+                        resolvingBookmarkData: bookmarkData,
+                        options: .withSecurityScope,
                         relativeTo: nil, bookmarkDataIsStale: &isStale)
 
                     if !isStale {
@@ -24,7 +29,10 @@ enum Shotty {
                         let _ = saveSaveDirectoryBookmark(url: url)
                     }
                 } catch {
-                    showToast(message: "\("书签恢复失败：".localized)\(error.localizedDescription)")
+                    showToast(
+                        message:
+                            "\("书签恢复失败：".localized)\(error.localizedDescription)"
+                    )
                 }
             }
             return nil
@@ -37,12 +45,15 @@ enum Shotty {
                     includingResourceValuesForKeys: nil,
                     relativeTo: nil
                 )
-                UserDefaults.standard.set(bookmarkData, forKey: "SaveDirectoryBookmark")
+                UserDefaults.standard.set(
+                    bookmarkData, forKey: "SaveDirectoryBookmark")
                 let _ = url.startAccessingSecurityScopedResource()
                 print("成功保存书签数据")
                 return url
             } catch {
-                showToast(message: "\("保存书签数据失败：".localized)\(error.localizedDescription)")
+                showToast(
+                    message:
+                        "\("保存书签数据失败：".localized)\(error.localizedDescription)")
             }
             return nil
         }
@@ -81,7 +92,6 @@ enum Shotty {
             }
         }
 
-
         static func closeWindow() {
             DispatchQueue.main.async {
                 if let appDelegate = NSApp.delegate as? AppDelegate {
@@ -101,14 +111,67 @@ enum Shotty {
         static func showToast(message: String, delay: TimeInterval = 2) {
             DispatchQueue.main.async {
                 if let appDelegate = NSApp.delegate as? AppDelegate {
-                    appDelegate.appState.showToast(message: message, delay: delay)
+                    appDelegate.appState.showToast(
+                        message: message, delay: delay)
                 }
             }
         }
     }
 
     enum ImageUtils {
-        static func saveImage(image: NSImage, dir: URL?, fileName: String, closeWindow: Bool) {
+        static func base64ToImage(base64: String) -> NSImage? {
+            guard let imageData = Data(base64Encoded: base64) else {
+                return nil
+            }
+            return NSImage(data: imageData)
+        }
+
+        static func performOCR(
+            on image: NSImage, done: @escaping (String) -> Void
+        ) {
+            guard
+                let cgImage = image.cgImage(
+                    forProposedRect: nil, context: nil, hints: nil)
+            else {
+                Shotty.Utils.showToast(message: "\("无法处理图像".localized)")
+                return
+            }
+
+            let request = VNRecognizeTextRequest { request, error in
+                guard
+                    let observations = request.results
+                        as? [VNRecognizedTextObservation]
+                else {
+                    Shotty.Utils.showToast(message: "\("OCR处理失败".localized)")
+                    return
+                }
+
+                let recognizedStrings = observations.compactMap { observation in
+                    observation.topCandidates(1).first?.string
+                }
+
+                DispatchQueue.main.async {
+                    done(recognizedStrings.joined(separator: "\n"))
+                }
+            }
+
+            request.recognitionLevel = .accurate
+            request.recognitionLanguages = ["zh-Hans", "zh-Hant", "en-US"]
+            request.usesLanguageCorrection = true
+
+            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+            do {
+                try handler.perform([request])
+            } catch {
+                Shotty.Utils.showToast(
+                    message:
+                        "\("OCR处理失败".localized): \(error.localizedDescription)")
+            }
+        }
+
+        static func saveImage(
+            image: NSImage, dir: URL?, fileName: String, closeWindow: Bool
+        ) {
             guard let data = image.tiffRepresentation,
                 let bitmap = NSBitmapImageRep(data: data),
                 let pngData = bitmap.representation(
@@ -120,53 +183,49 @@ enum Shotty {
                 do {
                     let savePath = dir.appendingPathComponent(fileName)
                     try pngData.write(to: savePath)
-                    Shotty.Utils.showToast(message: "\("已保存".localized): \(savePath.path)", delay: 5)
+                    Shotty.Utils.showToast(
+                        message: "\("已保存".localized): \(savePath.path)",
+                        delay: 5)
                     if closeWindow {
                         Shotty.Utils.closeWindow()
                     }
                 } catch {
-                    Shotty.Utils.showToast(message: "\("保存失败".localized): \(error.localizedDescription)")
+                    Shotty.Utils.showToast(
+                        message:
+                            "\("保存失败".localized): \(error.localizedDescription)"
+                    )
                 }
             } else {
                 Shotty.Utils.selectDirectory { url in
                     let savePath = url.appendingPathComponent(fileName)
                     do {
                         try pngData.write(to: savePath)
-                        Shotty.Utils.showToast(message: "\("已保存".localized): \(savePath.path)", delay: 5)
+                        Shotty.Utils.showToast(
+                            message: "\("已保存".localized): \(savePath.path)",
+                            delay: 5)
                         // 调用 appState 中的 setSaveDirectory 方法
                         DispatchQueue.main.async {
-                            if let appDelegate = NSApp.delegate as? AppDelegate {
-                                appDelegate.appState.setSaveDirectory(directory: url)
+                            if let appDelegate = NSApp.delegate as? AppDelegate
+                            {
+                                appDelegate.appState.setSaveDirectory(
+                                    directory: url)
                             }
                         }
                         if closeWindow {
                             Shotty.Utils.closeWindow()
                         }
                     } catch {
-                        Shotty.Utils.showToast(message: "\("保存失败".localized): \(error.localizedDescription)")
+                        Shotty.Utils.showToast(
+                            message:
+                                "\("保存失败".localized): \(error.localizedDescription)"
+                        )
                     }
                 }
-
-                // 使用 NSSavePanel 选择保存位置
-                // let savePanel = NSSavePanel()
-                // savePanel.allowedContentTypes = [.png]
-                // savePanel.nameFieldStringValue = path.lastPathComponent
-
-                // savePanel.begin { result in
-                //     if result == .OK, let url = savePanel.url {
-                //         do {
-                //             try pngData.write(to: url)
-                //             print("像已保存到：\(url.path)")
-                //             Shotty.Utils.saveSaveDirectoryBookmark(url: url)
-                //         } catch {
-                //             print("保存图像时出错：\(error)")
-                //         }
-                //     }
-                // }
             }
         }
         static func saveBase64Image(
-            base64String: String, dir: URL?, fileName: String, closeWindow: Bool = true
+            base64String: String, dir: URL?, fileName: String,
+            closeWindow: Bool = true
         ) {
             let components = base64String.components(separatedBy: ",")
             guard components.count > 1,
@@ -176,42 +235,32 @@ enum Shotty {
                 return
             }
 
-            saveImage(image: image, dir: dir, fileName: fileName, closeWindow: closeWindow)
-        }
-    }
-    enum JS {
-        static func genInitJSTag(imageBase64: String) -> String {
-            return """
-                <script>
-                window.shottyImageBase64 = '\(imageBase64)';
-                window.saveShottyImage = window.webkit.messageHandlers.saveBase64ImageHandler.postMessage;
-                </script>
-                """
-        }
-        static func genImageChangeJS(imageBase64: String) -> String {
-            return """
-                window.shottyImageBase64 = '\(imageBase64)';
-                window.onShottyImage && window.onShottyImage('\(imageBase64)');
-                """
+            saveImage(
+                image: image, dir: dir, fileName: fileName,
+                closeWindow: closeWindow)
         }
     }
     enum UpdateUtils {
         static func checkForUpdates() {
-            guard let url = URL(string: "http://120.46.72.66/shotty.zip") else { return }
+            guard let url = URL(string: "http://120.46.72.66/shotty.zip") else {
+                return
+            }
 
             var request = URLRequest(url: url)
             request.httpMethod = "HEAD"
 
             URLSession.shared.dataTask(with: request) { _, response, error in
                 guard let httpResponse = response as? HTTPURLResponse,
-                    let etag: String = httpResponse.allHeaderFields["Etag"] as? String,
+                    let etag: String = httpResponse.allHeaderFields["Etag"]
+                        as? String,
                     error == nil
                 else {
                     print("检查更新失败")
                     return
                 }
 
-                let currentETag = UserDefaults.standard.string(forKey: "LastETag") ?? ""
+                let currentETag =
+                    UserDefaults.standard.string(forKey: "LastETag") ?? ""
 
                 if etag != currentETag {
                     print("etag", etag)
@@ -229,12 +278,16 @@ enum Shotty {
                 }
 
                 do {
-                    let pluginDirectory = Constants.pluginDirectory.appendingPathComponent(
-                        Constants.defaultPluginName)
-                    if FileManager.default.fileExists(atPath: pluginDirectory.path) {
+                    let pluginDirectory = Constants.pluginDirectory
+                        .appendingPathComponent(
+                            Constants.defaultPluginName)
+                    if FileManager.default.fileExists(
+                        atPath: pluginDirectory.path)
+                    {
                         try FileManager.default.removeItem(at: pluginDirectory)
                     }
-                    try FileManager.default.unzipItem(at: localURL, to: Constants.pluginDirectory)
+                    try FileManager.default.unzipItem(
+                        at: localURL, to: Constants.pluginDirectory)
 
                     UserDefaults.standard.set(newETag, forKey: "LastETag")
                     Shotty.Utils.showToast(message: "\("更新成功".localized)")
@@ -246,7 +299,9 @@ enum Shotty {
             }.resume()
         }
         static func startUpdateCheck() {
-            let timer = Timer.scheduledTimer(withTimeInterval: 24 * 60 * 60, repeats: true) { _ in
+            let timer = Timer.scheduledTimer(
+                withTimeInterval: 24 * 60 * 60, repeats: true
+            ) { _ in
                 checkForUpdates()
             }
             timer.fire()  // 立即执行一次检查

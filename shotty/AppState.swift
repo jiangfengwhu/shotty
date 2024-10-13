@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import WebKit
+import WKWebViewJavascriptBridge
 
 class AppState: ObservableObject {
     @Published var capturedImage: NSImage?
@@ -8,6 +9,7 @@ class AppState: ObservableObject {
     @Published var saveDirectory: URL?
 
     var webview: WKWebView = WKWebView()
+    var bridge: WKWebViewJavascriptBridge
     var contentWindow: NSWindow?
     var toastWindow: NSWindow?
     private var hideToastWorkItem: DispatchWorkItem?
@@ -21,6 +23,11 @@ class AppState: ObservableObject {
 
     @Published var toastMessage: String?
     @Published var showToast: Bool = false
+
+    init() {
+        bridge = WKWebViewJavascriptBridge(webView: webview)
+        registerJSHandlers()
+    }
 
     func setDelegate(delegate: AppDelegate) {
         self.delegate = delegate
@@ -56,8 +63,8 @@ class AppState: ObservableObject {
         if let image = NSPasteboard.general.readObjects(
             forClasses: [NSImage.self], options: nil)?.first as? NSImage
         {
-            print("成功从剪贴板读取截图")
             capturedImage = image
+            callJSShottyImage()
             showContentWindow()
         } else {
             print("无法从剪贴板读取截图")
@@ -263,5 +270,44 @@ class AppState: ObservableObject {
             }
             toastWindow.orderFront(nil)
         }
+    }
+
+    func registerJSHandlers() {
+        bridge.register(handlerName: "saveBase64ImageCallback") { (params, callback) in
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd-HH-mm-ss"
+            let dateString = dateFormatter.string(from: Date())
+            // 调用保存 Base64 图像的方法
+            Shotty.ImageUtils.saveBase64Image(
+                base64String: params?["base64String"] as? String ?? "",
+                dir: self.saveDirectory,
+                fileName: "shotty-" + dateString + ".png",
+                closeWindow: params?["closeWindow"] as? Bool ?? true
+            )
+        }
+        bridge.register(handlerName: "hideContentViewCallback") { (params, callback) in
+            self.closeContentWindow()
+        }
+        bridge.register(handlerName: "showToastCallback") { (params, callback) in
+            self.showToast(message: params?["message"] as? String ?? "")
+        }
+        bridge.register(handlerName: "performOCRCallback") { (params, callback) in
+            if let base64 = params?["base64"] as? String {
+                if let image = Shotty.ImageUtils.base64ToImage(base64: base64) {
+                    Shotty.ImageUtils.performOCR(on: image) { result in
+                        callback?(result)
+                    }
+                }
+            }
+        }
+    }
+
+    func callJSShottyImage() {
+        bridge.call(
+            handlerName: "newShottyImageCallback",
+            data: [
+                "base64": capturedImage?.tiffRepresentation?.base64EncodedString() ?? ""
+            ],
+            callback: nil)
     }
 }

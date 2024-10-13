@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		5C7755B32CB8FCBD00130946 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 5C7755B22CB8FCBD00130946 /* ZIPFoundation */; };
 		5C97CF702C9D65DD009CF4BF /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 5C97CF6F2C9D65DD009CF4BF /* KeyboardShortcuts */; };
+		8B80A9562CBBB3990035FA76 /* WKWebViewJavascriptBridge in Frameworks */ = {isa = PBXBuildFile; productRef = 8B80A9552CBBB3990035FA76 /* WKWebViewJavascriptBridge */; };
 		8B85FCCC2CB1618F002CFE1B /* shotty in Resources */ = {isa = PBXBuildFile; fileRef = 8B85FCCB2CB1618F002CFE1B /* shotty */; };
 /* End PBXBuildFile section */
 
@@ -60,6 +61,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8B80A9562CBBB3990035FA76 /* WKWebViewJavascriptBridge in Frameworks */,
 				5C97CF702C9D65DD009CF4BF /* KeyboardShortcuts in Frameworks */,
 				5C7755B32CB8FCBD00130946 /* ZIPFoundation in Frameworks */,
 			);
@@ -109,6 +111,7 @@
 			packageProductDependencies = (
 				5C97CF6F2C9D65DD009CF4BF /* KeyboardShortcuts */,
 				5C7755B22CB8FCBD00130946 /* ZIPFoundation */,
+				8B80A9552CBBB3990035FA76 /* WKWebViewJavascriptBridge */,
 			);
 			productName = shotty;
 			productReference = 5CF0525D2C9AB35000483423 /* shotty.app */;
@@ -142,6 +145,7 @@
 			packageReferences = (
 				5C97CF6E2C9D65DD009CF4BF /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
 				5C7755B12CB8FCBD00130946 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+				8B80A9542CBBB3990035FA76 /* XCRemoteSwiftPackageReference "WKWebViewJavascriptBridge" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5CF0525E2C9AB35000483423 /* Products */;
@@ -397,6 +401,14 @@
 				minimumVersion = 2.0.2;
 			};
 		};
+		8B80A9542CBBB3990035FA76 /* XCRemoteSwiftPackageReference "WKWebViewJavascriptBridge" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Lision/WKWebViewJavascriptBridge";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -409,6 +421,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 5C97CF6E2C9D65DD009CF4BF /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
 			productName = KeyboardShortcuts;
+		};
+		8B80A9552CBBB3990035FA76 /* WKWebViewJavascriptBridge */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8B80A9542CBBB3990035FA76 /* XCRemoteSwiftPackageReference "WKWebViewJavascriptBridge" */;
+			productName = WKWebViewJavascriptBridge;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

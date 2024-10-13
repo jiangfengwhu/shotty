@@ -9,11 +9,7 @@ struct EditView: View {
             forKey: "preferredPlugin") ?? "")
     var body: some View {
         ZStack {
-            WebView(
-                pluginID: $activePluginId, image: $appState.capturedImage,
-                saveDirectory: $appState.saveDirectory, webView: appState.webview,
-                dismiss: appState.closeContentWindow
-            )
+            WebView(pluginID: $activePluginId, webView: appState.webview)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             VStack {
@@ -44,7 +40,7 @@ struct EditView: View {
                         Button(action: {
                             // appState.reloadWebView()
                             appState.showToast(
-                                message: "Reloading..." + UUID().uuidString + UUID().uuidString + UUID().uuidString + UUID().uuidString + UUID().uuidString
+                                message: "Reloading..." + UUID().uuidString
                             )
                             self.activePluginId = "http://localhost:5173/"
                         }) {
@@ -67,49 +63,29 @@ struct EditView: View {
 
 struct WebView: View {
     @Binding var pluginID: String
-    @Binding var image: NSImage?
-    @Binding var saveDirectory: URL?
-
     var webView: WKWebView
-    var dismiss: () -> Void
 
     var body: some View {
-        WebViewWrapper(
-            pluginID: pluginID, dismiss: dismiss, webView: webView, image: image,
-            saveDirectory: saveDirectory
-        )  // 传递图像
+        WebViewWrapper(pluginID: pluginID, webView: webView)
     }
 }
 
 struct WebViewWrapper: NSViewRepresentable {
     let pluginID: String
-    var dismiss: () -> Void
     var webView: WKWebView
 
-    var image: NSImage?
-    var saveDirectory: URL?
     func makeNSView(context: Context) -> WKWebView {
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator  // 添加 UI 代理
         if #available(macOS 13.3, *) {
             webView.isInspectable = true
-        } else {
-            // Fallback on earlier versions
         }
         webView.configuration.preferences.setValue(
             true, forKey: "allowFileAccessFromFileURLs")
-        let contentController = webView.configuration.userContentController
-        contentController.add(
-            context.coordinator, name: "saveBase64ImageHandler")
-        contentController.add(
-            context.coordinator, name: "hideContentViewHandler")
-        contentController.add(
-            context.coordinator, name: "showToastHandler")
         return webView
     }
 
     func updateNSView(_ nsView: WKWebView, context: Context) {
-        context.coordinator.updateSaveDirectory(url: saveDirectory)
         if context.coordinator.lastLoadedHTML != pluginID {  // 检查 HTML 是否变化
             if pluginID.lowercased().hasPrefix("http://")
                 || pluginID.lowercased().hasPrefix("https://")
@@ -127,20 +103,6 @@ struct WebViewWrapper: NSViewRepresentable {
             }
             context.coordinator.lastLoadedHTML = pluginID  // 更新已加载的 HTML
         }
-        if context.coordinator.lastImage != image {
-            context.coordinator.lastImage = image
-            let base64String =
-                image?.tiffRepresentation?.base64EncodedString() ?? ""
-            nsView.evaluateJavaScript(
-                Shotty.JS.genImageChangeJS(imageBase64: base64String)
-            ) { (result, error) in
-                if let error = error {
-                    print("JavaScript 执行失败：\(error.localizedDescription)")
-                } else {
-                    print("JavaScript 执行成功，结果：\(String(describing: result))")  // 打印执行结果
-                }
-            }
-        }
     }
 
     func makeCoordinator() -> Coordinator {
@@ -150,44 +112,14 @@ struct WebViewWrapper: NSViewRepresentable {
     class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler,
         WKUIDelegate
     {
+        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        }
+        
         var parent: WebViewWrapper
         var lastLoadedHTML: String = ""  // 将 lastLoadedHTML 移到 Coordinator
-        var lastImage: NSImage?
-        var saveDirectory: URL?
 
         init(_ parent: WebViewWrapper) {
             self.parent = parent
-        }
-
-        func updateSaveDirectory(url: URL?) {
-            saveDirectory = url
-        }
-
-        // 处理 JavaScript 脚本消息
-        func userContentController(
-            _ userContentController: WKUserContentController,
-            didReceive message: WKScriptMessage
-        ) {
-            if message.name == "saveBase64ImageHandler",
-                let params = message.body as? [String: Any]
-            {
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "yyyy-MM-dd-HH-mm-ss"
-                let dateString = dateFormatter.string(from: Date())
-                // 调用保存 Base64 图像的方法
-                Shotty.ImageUtils.saveBase64Image(
-                    base64String: params["base64String"] as? String ?? "",
-                    dir: saveDirectory,
-                    fileName: "shotty-" + dateString + ".png",
-                    closeWindow: params["closeWindow"] as? Bool ?? true
-                )  // 调用父视图的方法
-            } else if message.name == "showToastHandler",
-                let params = message.body as? [String: Any]
-            {
-                Shotty.Utils.showToast(message: params["message"] as? String ?? "")
-            } else if message.name == "hideContentViewHandler" {
-                parent.dismiss()
-            }
         }
 
         // 实现 WKUIDelegate 方法来处理文件选择

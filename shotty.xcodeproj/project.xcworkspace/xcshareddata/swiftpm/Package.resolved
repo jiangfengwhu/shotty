@@ -1,5 +1,5 @@
 {
-  "originHash" : "ebbe2ad2f6a11ce7997a3a43a3822b2388b16b85a02418a74b82f40c21fe2f0a",
+  "originHash" : "b8472a9fd32b27d03d4ab615229d7ad317f2233a4f54f237e56cc7fed41a8344",
   "pins" : [
     {
       "identity" : "keyboardshortcuts",
@@ -8,6 +8,15 @@
       "state" : {
         "revision" : "e6b60117ec266e1e5d059f7f34815144f9762b36",
         "version" : "2.0.2"
+      }
+    },
+    {
+      "identity" : "wkwebviewjavascriptbridge",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Lision/WKWebViewJavascriptBridge",
+      "state" : {
+        "revision" : "51cdc110657e5ad469df712ca79632761d3fe11d",
+        "version" : "1.2.3"
       }
     },
     {

@@ -1,6 +1,42 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "OCR处理失败" : {
+      "comment" : "OCR processing failed",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OCR processing failed"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OCR处理失败"
+          }
+        }
+      }
+    },
+    "OCR处理完成" : {
+      "comment" : "OCR processing completed",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OCR processing completed"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OCR处理完成"
+          }
+        }
+      }
+    },
     "Shotty" : {
       "comment" : "Shotty",
       "extractionState" : "manual",
@@ -267,6 +303,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "插件管理"
+          }
+        }
+      }
+    },
+    "无法处理图像" : {
+      "comment" : "Unable to process image",
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to process image"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法处理图像"
           }
         }
       }

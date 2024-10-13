@@ -18,10 +18,10 @@ struct ToastView: View {
                 .padding()
                 .background(
                     VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
-                        .cornerRadius(25)
+                        .cornerRadius(14)
                 )
                 .foregroundColor(colorScheme == .dark ? .white : .black)
-                .cornerRadius(25)
+                .cornerRadius(14)
             }
             .frame(width: 300, alignment: .bottom)
             .padding(20)
