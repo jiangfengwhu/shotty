@@ -10,10 +10,10 @@ struct PluginManagerView: View {
             List(appState.plugins, id: \.self, selection: $selectedPlugin) {
                 plugin in
                 HStack {
-                    Text(plugin.replacingOccurrences(of: ".html", with: ""))  // 插件名称
+                    Text(plugin)  // 插件名称
                     Spacer()
                     // 判断是否为默认插件
-                    Text(appState.isDefaultPlugin(plugin: plugin) ? "是" : "否")  // 默认插件状态
+                    Text(appState.isDefaultPlugin(plugin: plugin) ? "是".localized : "否".localized)  // 默认插件状态
                         .foregroundColor(
                             appState.isDefaultPlugin(plugin: plugin)
                                 ? .green : .red)
@@ -34,7 +34,7 @@ struct PluginManagerView: View {
 
             // 左下角按钮
             HStack {
-                Button("设置为启动插件") {
+                Button("设置为启动插件".localized) {
                     if let selectedPlugin = selectedPlugin {
                         appState.setPreferredPlugin(plugin: selectedPlugin)
                         appState.reloadPlugins()
@@ -42,7 +42,7 @@ struct PluginManagerView: View {
                 }
                 .padding()
 
-                Button("上传插件") {
+                Button("上传插件".localized) {
                     uploadPlugin()
                 }
                 .padding()

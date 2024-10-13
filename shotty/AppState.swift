@@ -76,7 +76,7 @@ class AppState: ObservableObject {
             backing: .buffered,
             defer: false
         )
-        contentWindow?.title = "截图结果"
+        contentWindow?.title = "Shotty".localized
         contentWindow?.contentView = NSHostingView(rootView: contentView)
         contentWindow?.delegate = delegate
         contentWindow?.center()
@@ -109,7 +109,7 @@ class AppState: ObservableObject {
                 $0.lastPathComponent
             }
         } catch {
-            showToast(message: "加载插件时出错：\(error)")
+            showToast(message: "\("加载插件失败".localized): \(error.localizedDescription)")
         }
     }
 
@@ -125,10 +125,10 @@ class AppState: ObservableObject {
             if fileManager.fileExists(atPath: destinationURL.path) {
                 // 弹出确认对话框
                 let alert = NSAlert()
-                alert.messageText = "插件已存在"
-                alert.informativeText = "是否覆盖现有插件？"
-                alert.addButton(withTitle: "覆盖")
-                alert.addButton(withTitle: "取消")
+                alert.messageText = "插件已存在".localized
+                alert.informativeText = "是否覆盖现有插件".localized + "?"
+                alert.addButton(withTitle: "覆盖".localized)
+                alert.addButton(withTitle: "取消".localized)
 
                 let response = alert.runModal()
                 if response == .alertSecondButtonReturn {
@@ -139,7 +139,7 @@ class AppState: ObservableObject {
             try fileManager.copyItem(at: url, to: destinationURL)
             reloadPlugins()  // 重新加载插件列表
         } catch {
-            showToast(message: "保存插件时出错：\(error.localizedDescription)")
+            showToast(message: "\("保存插件失败".localized): \(error.localizedDescription)")
         }
     }
 
@@ -164,7 +164,7 @@ class AppState: ObservableObject {
                     attributes: nil)
                 print("插件目录已创建：\(pluginDirectory.path)")
             } catch {
-                showToast(message: "创建插件目录时出错：\(error.localizedDescription)")
+                showToast(message: "\("创建插件目录失败".localized): \(error.localizedDescription)")
             }
         }
 
@@ -182,10 +182,10 @@ class AppState: ObservableObject {
                     setPreferredPlugin(plugin: Constants.defaultPluginName)
                     print("默认插件已复制到: \(destinationURL.path)")
                 } catch {
-                    showToast(message: "复制默认插件时出错: \(error.localizedDescription)")
+                    showToast(message: "\("复制默认插件失败".localized): \(error.localizedDescription)")
                 }
             } else {
-                showToast(message: "在 bundle 中未找到默认插件")
+                showToast(message: "\("在 bundle 中未找到默认插件".localized)")
             }
         }
     }
@@ -207,7 +207,7 @@ class AppState: ObservableObject {
         webview.reload()
     }
 
-    func showToast(message: String) {
+    func showToast(message: String, delay: TimeInterval = 2) {
         hideToastWorkItem?.cancel()
 
         self.toastMessage = message
@@ -219,7 +219,7 @@ class AppState: ObservableObject {
         }
         self.hideToastWorkItem = workItem
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: workItem)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: workItem)
     }
 
     private func hideToast() {
@@ -247,17 +247,21 @@ class AppState: ObservableObject {
             toastWindow?.hasShadow = false
             toastWindow?.level = .floating
             toastWindow?.ignoresMouseEvents = true
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {[weak self] in
+            guard let self = self, let toastWindow = self.toastWindow else { return }
+            toastWindow.setContentSize(toastWindow.contentView?.fittingSize ?? .zero)
             if let screen = NSScreen.main {
                 let screenRect = screen.visibleFrame
-                let toastRect = toastWindow?.frame ?? CGRect.zero
+                let toastRect = toastWindow.frame
                 let newOrigin = NSPoint(
                     x: screenRect.midX - toastRect.width / 2 - 20,
                     y: screenRect.maxY - toastRect.height
                 )
-                toastWindow?.setFrameOrigin(newOrigin)
+                toastWindow.setFrameOrigin(newOrigin)
             }
+            toastWindow.orderFront(nil)
         }
-
-        toastWindow?.orderFront(nil)
     }
 }

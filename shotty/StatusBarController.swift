@@ -18,13 +18,13 @@ class StatusBarController {
 
         // 添加截图菜单项
         let captureItem = NSMenuItem(
-            title: "截图", action: #selector(captureScreen), keyEquivalent: "2")
+            title: "截图".localized, action: #selector(captureScreen), keyEquivalent: "2")
         captureItem.target = self
         menu.addItem(captureItem)
 
         // 添加打开 ContentView 的菜单项
         let openContentViewItem = NSMenuItem(
-            title: "打开面板", action: #selector(openContentView), keyEquivalent: "o")
+            title: "打开Shotty".localized, action: #selector(openContentView), keyEquivalent: "o")
         openContentViewItem.target = self
         menu.addItem(openContentViewItem)
 
@@ -33,13 +33,13 @@ class StatusBarController {
         // 添加设置的菜单项
 
         let settingsItem = NSMenuItem(
-            title: "设置", action: #selector(openSettings), keyEquivalent: ",")
+            title: "设置".localized, action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
 
         menu.addItem(
             NSMenuItem(
-                title: "退出", action: #selector(NSApplication.shared.terminate), keyEquivalent: "q"))
+                title: "退出".localized, action: #selector(NSApplication.shared.terminate), keyEquivalent: "q"))
         statusItem.menu = menu
 
         if let statusBarButton = statusItem.button {
@@ -67,13 +67,13 @@ class StatusBarController {
     @MainActor func updateMenuShortcuts() {
         if let menu = statusItem.menu {
             // 更新截图菜单项的快捷键
-            if let captureItem = menu.item(withTitle: "截图") {
+            if let captureItem = menu.item(withTitle: "截图".localized) {
                 let shortcut = KeyboardShortcuts.getShortcut(for: .openCaptureScreen)
                 captureItem.setShortcut(shortcut)
             }
 
             // 更新打开内容视图菜单项的快捷键
-            if let openContentViewItem = menu.item(withTitle: "打开截图结果") {
+            if let openContentViewItem = menu.item(withTitle: "打开Shotty".localized) {
                 let shortcut = KeyboardShortcuts.getShortcut(for: .openContentView)
                 openContentViewItem.setShortcut(shortcut)
             }

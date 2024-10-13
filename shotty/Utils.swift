@@ -1,7 +1,11 @@
 import AppKit
 import SwiftUICore
 import ZIPFoundation
-
+extension String {
+    var localized: String {
+        NSLocalizedString(self, comment: "")
+    }
+}
 enum Shotty {
     enum Utils {
         static func initSaveDirectory() -> URL? {
@@ -20,7 +24,7 @@ enum Shotty {
                         let _ = saveSaveDirectoryBookmark(url: url)
                     }
                 } catch {
-                    showToast(message: "无法恢复书签：\(error.localizedDescription)")
+                    showToast(message: "\("书签恢复失败：".localized)\(error.localizedDescription)")
                 }
             }
             return nil
@@ -38,7 +42,7 @@ enum Shotty {
                 print("成功保存书签数据")
                 return url
             } catch {
-                showToast(message: "保存书签数据失败: \(error.localizedDescription)")
+                showToast(message: "\("保存书签数据失败：".localized)\(error.localizedDescription)")
             }
             return nil
         }
@@ -77,34 +81,6 @@ enum Shotty {
             }
         }
 
-        static func loadHTMLFile(done: @escaping (String?) -> Void) {
-            selectHTMLFile { url in
-                do {
-                    let htmlContent = try String(
-                        contentsOf: url, encoding: .utf8)
-                    done(htmlContent)
-                } catch {
-                    showToast(message: "读取 HTML 文件时出错：\(error.localizedDescription)")
-                    done(nil)
-                }
-            }
-        }
-
-        static func loadPluginHTMLByID(
-            pluginID: String, done: @escaping (String?) -> Void
-        ) {
-            let pluginDirectory = Constants.pluginDirectory
-            let pluginURL = pluginDirectory.appendingPathComponent(
-                pluginID)
-            do {
-                let htmlContent = try String(
-                    contentsOf: pluginURL, encoding: .utf8)
-                done(htmlContent)
-            } catch {
-                print("插件 HTML 时出错：\(error)")
-                done(nil)
-            }
-        }
 
         static func closeWindow() {
             DispatchQueue.main.async {
@@ -122,10 +98,10 @@ enum Shotty {
             }
         }
 
-        static func showToast(message: String) {
+        static func showToast(message: String, delay: TimeInterval = 2) {
             DispatchQueue.main.async {
                 if let appDelegate = NSApp.delegate as? AppDelegate {
-                    appDelegate.appState.showToast(message: message)
+                    appDelegate.appState.showToast(message: message, delay: delay)
                 }
             }
         }
@@ -142,19 +118,21 @@ enum Shotty {
             }
             if let dir = dir {
                 do {
-                    try pngData.write(to: dir.appendingPathComponent(fileName))
+                    let savePath = dir.appendingPathComponent(fileName)
+                    try pngData.write(to: savePath)
+                    Shotty.Utils.showToast(message: "\("已保存".localized): \(savePath.path)", delay: 5)
                     if closeWindow {
                         Shotty.Utils.closeWindow()
                     }
                 } catch {
-                    Shotty.Utils.showToast(message: "保存图像时出错：\(error.localizedDescription)")
+                    Shotty.Utils.showToast(message: "\("保存失败".localized): \(error.localizedDescription)")
                 }
             } else {
                 Shotty.Utils.selectDirectory { url in
                     let savePath = url.appendingPathComponent(fileName)
                     do {
                         try pngData.write(to: savePath)
-                        print("像已保存到：\(savePath.path)")
+                        Shotty.Utils.showToast(message: "\("已保存".localized): \(savePath.path)", delay: 5)
                         // 调用 appState 中的 setSaveDirectory 方法
                         DispatchQueue.main.async {
                             if let appDelegate = NSApp.delegate as? AppDelegate {
@@ -165,7 +143,7 @@ enum Shotty {
                             Shotty.Utils.closeWindow()
                         }
                     } catch {
-                        Shotty.Utils.showToast(message: "保存图像时出错：\(error.localizedDescription)")
+                        Shotty.Utils.showToast(message: "\("保存失败".localized): \(error.localizedDescription)")
                     }
                 }
 
@@ -259,7 +237,7 @@ enum Shotty {
                     try FileManager.default.unzipItem(at: localURL, to: Constants.pluginDirectory)
 
                     UserDefaults.standard.set(newETag, forKey: "LastETag")
-                    print("更新成功安装")
+                    Shotty.Utils.showToast(message: "\("更新成功".localized)")
 
                     Shotty.Utils.refreshWebView()
                 } catch {

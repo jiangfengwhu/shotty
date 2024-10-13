@@ -44,7 +44,7 @@ struct EditView: View {
                         Button(action: {
                             // appState.reloadWebView()
                             appState.showToast(
-                                message: "Reloading..." + UUID().uuidString
+                                message: "Reloading..." + UUID().uuidString + UUID().uuidString + UUID().uuidString + UUID().uuidString + UUID().uuidString
                             )
                             self.activePluginId = "http://localhost:5173/"
                         }) {
@@ -135,9 +135,7 @@ struct WebViewWrapper: NSViewRepresentable {
                 Shotty.JS.genImageChangeJS(imageBase64: base64String)
             ) { (result, error) in
                 if let error = error {
-                    Shotty.Utils.showToast(
-                        message: "JavaScript 执行出错：\(error.localizedDescription)"
-                    )
+                    print("JavaScript 执行失败：\(error.localizedDescription)")
                 } else {
                     print("JavaScript 执行成功，结果：\(String(describing: result))")  // 打印执行结果
                 }
@@ -275,7 +273,7 @@ struct WebViewWrapper: NSViewRepresentable {
                                         print("文件已保存到: \(destinationUrl.path)")
                                     } catch {
                                         Shotty.Utils.showToast(
-                                            message: "保存文件时出错: \(error.localizedDescription)"
+                                            message: "\("保存文件失败".localized): \(error.localizedDescription)"
                                         )
                                     }
                                 }
@@ -284,7 +282,7 @@ struct WebViewWrapper: NSViewRepresentable {
                     }
                 } else {
                     Shotty.Utils.showToast(
-                        message: "下载文件时出错: \(error?.localizedDescription ?? "未知错误")"
+                        message: "\("下载文件失败".localized): \(error?.localizedDescription ?? "\("未知错误".localized)")"
                     )
                 }
             }

@@ -10,12 +10,12 @@ struct SettingsView: View {
 
             PluginManagerView(appState: appState)
                 .tabItem {
-                    Label("插件管理", systemImage: "puzzlepiece")
+                    Label("插件管理".localized, systemImage: "puzzlepiece")
                 }
                 .tag(0)
             ShortcutsSettingsView(appState: appState)
                 .tabItem {
-                    Label("快捷键", systemImage: "keyboard")
+                    Label("快捷键".localized, systemImage: "keyboard")
                 }
                 .tag(1)
 
@@ -55,7 +55,7 @@ struct ShortcutsSettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
-                Text("截图:")
+                Text("截图".localized + ":")
                     .frame(width: 100, alignment: .trailing)
                 KeyboardShortcuts.Recorder(
                     for: .openCaptureScreen,
@@ -67,7 +67,7 @@ struct ShortcutsSettingsView: View {
             }
 
             HStack {
-                Text("打开图片编辑器:")
+                Text("打开Shotty".localized + ":")
                     .frame(width: 100, alignment: .trailing)
                 KeyboardShortcuts.Recorder(
                     for: .openContentView,
@@ -79,7 +79,7 @@ struct ShortcutsSettingsView: View {
             }
 
             HStack {
-                Text("保存目录:")
+                Text("保存目录".localized + ":")
                     .frame(width: 100, alignment: .trailing)
                     .padding(.trailing, 36)
 
@@ -89,7 +89,7 @@ struct ShortcutsSettingsView: View {
                             appState.setSaveDirectory(directory: url)
                         }
                     }) {
-                        Text(appState.saveDirectory?.path ?? "请选择保存目录")
+                        Text(appState.saveDirectory?.path ?? "\("请选择保存目录".localized)")
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }

@@ -2,24 +2,25 @@ import SwiftUI
 
 struct ToastView: View {
     @ObservedObject var appState: AppState
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         if let message = appState.toastMessage, appState.showToast {
             VStack {
-                Spacer()
                 HStack {
                     Image(nsImage: NSApp.applicationIconImage)
                         .resizable()
                         .frame(width: 35, height: 35)
                     Text(message)
                         .bold()
+                        .lineLimit(nil)
                 }
                 .padding()
                 .background(
                     VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
                         .cornerRadius(25)
                 )
-                .foregroundColor(.black)
+                .foregroundColor(colorScheme == .dark ? .white : .black)
                 .cornerRadius(25)
             }
             .frame(width: 300, alignment: .bottom)
